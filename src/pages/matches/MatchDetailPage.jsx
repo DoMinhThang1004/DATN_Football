@@ -1,194 +1,265 @@
-import React, { useState } from "react";
-import { MapPin, Calendar, Clock, ChevronLeft, ZoomIn, ZoomOut, RotateCcw, ShoppingCart, Info, Check, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, AlertCircle, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { 
+  MapPin, Calendar, Clock, ChevronLeft, ZoomIn, ZoomOut, RotateCcw, 
+  ShoppingCart, Info, Check, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, 
+  AlertCircle, X, Loader2, Filter, Ticket
+} from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
-import { useCart } from "../../context/CartContext.jsx"; // Đã sửa đường dẫn import cho phù hợp cấu trúc chung
-import CommentSection from "../../components/user/CommentsSection.jsx"; // <--- ĐÃ THÊM COMPONENT BÌNH LUẬN
+import { useCart } from "../../context/CartContext.jsx";
+import CommentSection from "../../components/user/CommentsSection.jsx"; 
+
+// API URL
+const API_BASE = "http://localhost:5000/api";
 
 export default function MatchDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { cartItems, addToCart, removeFromCart } = useCart();
 
   // --- STATE ---
-  const [viewMode, setViewMode] = useState("stadium"); // 'stadium' | 'zone'
-  const [selectedZone, setSelectedZone] = useState(null);
+  const [match, setMatch] = useState(null);             
+  const [ticketConfigs, setTicketConfigs] = useState([]); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [viewMode, setViewMode] = useState("stadium"); 
+  const [selectedConfig, setSelectedConfig] = useState(null); 
+  
+  // State lưu các ghế đã bán
+  const [occupiedSeats, setOccupiedSeats] = useState([]); 
+  const [isLoadingSeats, setIsLoadingSeats] = useState(false);
+
   const [zoomLevel, setZoomLevel] = useState(1);
-
-  // State hiển thị Modal cảnh báo quá giới hạn vé
   const [showLimitModal, setShowLimitModal] = useState(false);
+  
+  const [zoneFilter, setZoneFilter] = useState(null); 
 
-  // --- MOCK DATA ---
-  const matchInfo = {
-    home: "Hà Nội FC",
-    away: "Công An Hà Nội",
-    stadium: "Sân vận động Hàng Đẫy",
-    date: "27-11-2025",
-    time: "19:15",
+  // --- 1. FETCH DATA ---
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [resMatch, resConfigs] = await Promise.all([
+            fetch(`${API_BASE}/matches/${id}`),
+            fetch(`${API_BASE}/match-t-configs/match/${id}`)
+        ]);
+
+        if (!resMatch.ok) throw new Error("Không tìm thấy trận đấu");
+
+        const matchData = await resMatch.json();
+        setMatch(matchData);
+
+        if (resConfigs.ok) {
+            const configsData = await resConfigs.json();
+            const mappedConfigs = configsData.map(c => {
+                let group = "OTHER";
+                const zName = c.zone_name.toUpperCase();
+                if (zName.includes("KHÁN ĐÀI A")) {
+                    if (zName.includes("VIP") || zName.includes("PLATINUM")) group = "A-VIP";
+                    else if (zName.includes("TẦNG 2")) group = "A-T2";
+                    else group = "A-T1";
+                } else if (zName.includes("KHÁN ĐÀI B")) {
+                    if (zName.includes("TẦNG 2")) group = "B-T2";
+                    else group = "B-T1";
+                } else if (zName.includes("KHÁN ĐÀI C")) {
+                    group = "C";
+                } else if (zName.includes("KHÁN ĐÀI D")) {
+                    group = "D";
+                }
+
+                return {
+                    id: c.id,                    
+                    name: c.type_name,           
+                    zoneName: c.zone_name,       
+                    price: Number(c.price),      
+                    color: c.color_code || "#3B82F6", 
+                    quantity: c.quantity_allocated,
+                    sold: c.quantity_sold || 0,
+                    zoneGroup: group
+                };
+            });
+            setTicketConfigs(mappedConfigs);
+        }
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  // --- 2. FETCH GHẾ ĐÃ BÁN ---
+  useEffect(() => {
+      const fetchOccupiedSeats = async () => {
+          if (!selectedConfig) return;
+          
+          setIsLoadingSeats(true);
+          try {
+              const res = await fetch(`${API_BASE}/tickets/occupied/${selectedConfig.id}`);
+              if (res.ok) {
+                  const seats = await res.json();
+                  setOccupiedSeats(seats); 
+              }
+          } catch (e) {
+              console.error("Lỗi tải ghế:", e);
+          } finally {
+              setIsLoadingSeats(false);
+          }
+      };
+
+      fetchOccupiedSeats();
+  }, [selectedConfig]); 
+
+  // --- DỮ LIỆU VISUAL (GIỮ NGUYÊN) ---
+  const zones = [
+    { id: "A-T2-1", name: "A - Tầng 2", group: "A-T2", style: { top: "5%", left: "25%", width: "50%", height: "8%", bg: "bg-blue-600" } },
+    { id: "A-VIP", name: "A - VIP/Platinum", group: "A-VIP", style: { top: "15%", left: "35%", width: "30%", height: "6%", bg: "bg-yellow-500" } },
+    { id: "A-T1-L", name: "A - Tầng 1", group: "A-T1", style: { top: "15%", left: "15%", width: "18%", height: "8%", bg: "bg-orange-500" } },
+    { id: "A-T1-R", name: "A - Tầng 1", group: "A-T1", style: { top: "15%", right: "15%", width: "18%", height: "8%", bg: "bg-orange-500" } },
+    { id: "B-T2", name: "B - Tầng 2", group: "B-T2", style: { bottom: "5%", left: "25%", width: "50%", height: "8%", bg: "bg-blue-500" } },
+    { id: "B-T1", name: "B - Tầng 1 (CĐV)", group: "B-T1", style: { bottom: "15%", left: "20%", width: "60%", height: "8%", bg: "bg-red-600" } },
+    { id: "C-Stand", name: "Khán đài C & D", group: "C", style: { top: "30%", left: "5%", width: "8%", height: "40%", bg: "bg-purple-500" } }, 
+    { id: "D-Stand", name: "Khán đài D & E", group: "D", style: { top: "30%", right: "5%", width: "8%", height: "40%", bg: "bg-purple-500" } }, 
+  ];
+
+  // --- HANDLERS ---
+  const getRowLabel = (index) => {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    return index < 26 ? alphabet[index] : alphabet[index % 26] + (Math.floor(index/26));
   };
 
-  // Danh sách loại vé
-  const ticketTypes = [
-    { id: "CAT1", name: "Vé Phổ Thông (CAT1)", price: 150000, color: "bg-blue-600", targetZone: "A5-T1" },
-    { id: "CAT2", name: "Vé Phổ Thông (CAT2)", price: 150000, color: "bg-blue-500", targetZone: "B10-T1" },
-    { id: "VIP", name: "Vé VIP (A2/A3)", price: 300000, color: "bg-orange-500", targetZone: "A3-T1" }, 
-    { id: "SVIP", name: "Vé Super VIP (A1)", price: 500000, color: "bg-red-600", targetZone: "A1-T1" }, 
-  ];
+  const handleMapZoneClick = (group) => {
+    setZoneFilter(group); 
+    setSelectedConfig(null); 
+    setViewMode("stadium"); 
+  };
 
-  // DỮ LIỆU CÁC KHỐI TRÊN SÂN
-  const zones = [
-    // KHÁN ĐÀI A (Trên) - Tầng 2
-    { id: "A5-T2", name: "A5-T2", type: "CAT1", side: "top", style: { top: "8%", left: "15%", width: "12%", height: "6%", bg: "bg-blue-600" } },
-    { id: "A3-T2", name: "A3-T2", type: "CAT1", side: "top", style: { top: "8%", left: "29%", width: "12%", height: "6%", bg: "bg-yellow-400" } },
-    { id: "A1-T2", name: "A1-T2", type: "VIP",  side: "top", style: { top: "8%", left: "43%", width: "14%", height: "6%", bg: "bg-orange-500" } },
-    { id: "A2-T2", name: "A2-T2", type: "VIP",  side: "top", style: { top: "8%", left: "59%", width: "12%", height: "6%", bg: "bg-orange-500" } },
-    { id: "A4-T2", name: "A4-T2", type: "CAT1", side: "top", style: { top: "8%", left: "73%", width: "12%", height: "6%", bg: "bg-blue-600" } },
-    
-    // Tầng 1
-    { id: "A5-T1", name: "A5-T1", type: "CAT1", side: "top", style: { top: "16%", left: "15%", width: "12%", height: "8%", bg: "bg-blue-600" } },
-    { id: "A3-T1", name: "A3-T1", type: "VIP",  side: "top", style: { top: "16%", left: "29%", width: "12%", height: "8%", bg: "bg-orange-500" } },
-    { id: "A1-T1", name: "A1-T1", type: "SVIP", side: "top", style: { top: "16%", left: "43%", width: "14%", height: "8%", bg: "bg-red-600" } },    
-    { id: "A2-T1", name: "A2-T1", type: "VIP",  side: "top", style: { top: "16%", left: "59%", width: "12%", height: "8%", bg: "bg-orange-500" } }, 
-    { id: "A4-T1", name: "A4-T1", type: "CAT1", side: "top", style: { top: "16%", left: "73%", width: "12%", height: "8%", bg: "bg-blue-600" } },
+  const handleClearFilter = () => {
+    setZoneFilter(null);
+    setSelectedConfig(null);
+  };
 
-    // KHÁN ĐÀI B (Dưới)
-    { id: "B14-T1", name: "B14", type: "CAT2", side: "bottom", style: { bottom: "12%", left: "22%", width: "11%", height: "9%", bg: "bg-blue-400" } },
-    { id: "B13-T1", name: "B13", type: "CAT2", side: "bottom", style: { bottom: "10%", left: "35%", width: "11%", height: "9%", bg: "bg-yellow-400" } },
-    { id: "B10-T1", name: "B10", type: "CAT2", side: "bottom", style: { bottom: "10%", left: "54%", width: "11%", height: "9%", bg: "bg-green-500" } },
-    { id: "B9-T1",  name: "B9",  type: "CAT2", style: { bottom: "12%", left: "67%", width: "11%", height: "9%", bg: "bg-blue-400" } },
-
-    // KHÁN ĐÀI C/D (Hai bên)
-    { id: "B15-T1", name: "B15", type: "CAT2", side: "left", style: { top: "38%", left: "8%", width: "6%", height: "24%", bg: "bg-purple-500" } }, 
-    { id: "B8-T1",  name: "B8",  type: "CAT2", side: "right", style: { top: "38%", right: "8%", width: "6%", height: "24%", bg: "bg-purple-500" } }, 
-  ];
-
-  // --- LOGIC ---
-    const navigate = useNavigate();
-    const { cartItems, addToCart, removeFromCart } = useCart();
-  
-  const handleZoneClick = (zone) => {
-    setSelectedZone(zone);
+  const handleConfigClick = (config) => {
+    setSelectedConfig(config);
     setViewMode("zone");
     setZoomLevel(1);
   };
 
-  const handleBackToStadium = () => {
-    setViewMode("stadium");
-    setSelectedZone(null);
-    setZoomLevel(1);
-  };
-
-  const handleTicketTypeClick = (targetZoneId) => {
-    const zone = zones.find(z => z.id === targetZoneId);
-    if (zone) {
-        setSelectedZone(zone);
-        setViewMode("zone");
-        setZoomLevel(1);
-    } else {
-        alert("Khu vực này hiện chưa mở bán online.");
-    }
-  };
-
-  // Zoom controls
+  const handleBackToStadium = () => setViewMode("stadium");
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 2.0));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.6));
   const handleResetZoom = () => setZoomLevel(1);
 
-    // --- LOGIC CHỌN GHẾ ---
-    const handleSeatClick = (seatId, price) => {
-        const isSelected = cartItems.find((s) => s.id === seatId);
+  const formatDate = (isoString) => {
+    if (!isoString) return "";
+    return new Date(isoString).toLocaleString('vi-VN', {
+      hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+  };
 
-        if (isSelected) {
-            // Bỏ chọn
-            removeFromCart(seatId);
-        } else {
-            // Thêm vào giỏ - Kiểm tra giới hạn 4 vé
-            if (cartItems.length >= 4) {
-                setShowLimitModal(true);
-                return;
-            }
-            addToCart([{ id: seatId, price, zone: selectedZone?.name || "" }]);
+  const handleSeatClick = (seatLabel) => {
+    if (!selectedConfig) return;
+    const seatId = `${selectedConfig.id}-${seatLabel}`;
+    const isSelected = cartItems.find((s) => s.id === seatId);
+
+    if (isSelected) {
+        removeFromCart(seatId);
+    } else {
+        if (cartItems.length >= 4) {
+            setShowLimitModal(true);
+            return;
         }
-    };
+        addToCart([{ 
+            id: seatId,                  
+            matchId: match.id,
+            matchName: `${match.home_team} vs ${match.away_team}`,
+            matchTime: match.start_time,
+            stadium: match.stadium_name,
+            image: match.home_logo,       
+            configId: selectedConfig.id, 
+            ticketName: selectedConfig.name,
+            zoneName: selectedConfig.zoneName,
+            price: selectedConfig.price,
+            color: selectedConfig.color,
+            seatNumber: seatLabel 
+        }]);
+    }
+  };
 
-  // Helper render ghế
-  const renderSeats = (zone) => {
-    return Array.from({ length: 60 }).map((_, idx) => {
-        const seatId = `${zone.id}-${idx + 1}`;
-        const isSelected = cartItems.find(s => s.id === seatId);
-        const isSold = Math.random() < 0.1;
+  const renderSeats = () => {
+    if (!selectedConfig) return null;
+    const SEATS_PER_ROW = 10;
+    const displayCount = Math.min(selectedConfig.quantity, 200); 
+
+    return Array.from({ length: displayCount }).map((_, idx) => {
+        const rowIndex = Math.floor(idx / SEATS_PER_ROW); 
+        const colIndex = (idx % SEATS_PER_ROW) + 1;       
+        const rowLabel = getRowLabel(rowIndex);
+        const seatLabel = `${rowLabel}${colIndex}`;
+        const seatId = `${selectedConfig.id}-${seatLabel}`;
         
-        let ticketType = ticketTypes[0]; 
-        if (zone.type === "SVIP") ticketType = ticketTypes.find(t => t.id === "SVIP");
-        else if (zone.type === "VIP") ticketType = ticketTypes.find(t => t.id === "VIP");
-        else if (zone.type === "CAT2") ticketType = ticketTypes.find(t => t.id === "CAT2");
+        const isSold = occupiedSeats.includes(seatLabel);
+        const isSelected = cartItems.find(s => s.id === seatId);
         
         return (
             <button
                 key={seatId}
                 disabled={isSold}
-                onClick={() => handleSeatClick(seatId, ticketType.price)}
+                onClick={() => handleSeatClick(seatLabel)}
                 className={`
-                    w-8 h-8 rounded text-[10px] font-bold flex items-center justify-center transition-all 
+                    w-10 h-10 rounded-lg text-xs font-bold flex items-center justify-center transition-all border
                     ${isSold 
-                        ? "bg-gray-300 text-gray-400 cursor-not-allowed" 
+                        ? "bg-red-500 text-white cursor-not-allowed border-red-600 opacity-50" // ĐÃ BÁN: MÀU ĐỎ
                         : isSelected 
-                            ? "bg-green-600 text-white shadow-lg scale-110" 
-                            : "bg-white border border-gray-300 text-gray-600 hover:border-blue-500 hover:text-blue-600"
+                            ? "text-white shadow-lg scale-110 border-transparent ring-2 ring-offset-1 ring-blue-400" 
+                            : "bg-white text-gray-600 hover:border-blue-500 hover:text-blue-600 border-gray-300 shadow-sm"
                     }
                 `}
+                style={isSelected && !isSold ? {backgroundColor: selectedConfig.color} : {}}
+                title={isSold ? "Đã bán" : `Ghế ${seatLabel}`}
             >
-                {isSold ? "" : idx + 1}
+                {isSold ? <X size={14}/> : seatLabel}
             </button>
         );
     });
   };
 
+  const displayedConfigs = zoneFilter ? ticketConfigs.filter(c => c.zoneGroup === zoneFilter) : ticketConfigs;
+
+  if (isLoading) return <UserLayout><div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={40}/></div></UserLayout>;
+  if (error || !match) return <UserLayout><div className="h-screen flex items-center justify-center flex-col"> <h2 className="text-2xl font-bold text-gray-800 mb-2">Không tìm thấy trận đấu!</h2> <Link to="/matches" className="text-blue-600 hover:underline">Quay lại danh sách</Link> </div></UserLayout>;
+
   return (
     <UserLayout>
       <div className="bg-gray-100 min-h-screen pb-12 relative">
         
-        {/* --- MODAL CẢNH BÁO QUÁ GIỚI HẠN VÉ --- */}
         {showLimitModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fadeIn">
                 <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
-                    {/* Nút đóng góc trên */}
-                    <button onClick={() => setShowLimitModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                        <X size={24} />
-                    </button>
-                    
-                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                        <AlertCircle size={32} />
-                    </div>
-                    
+                    <button onClick={() => setShowLimitModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24} /></button>
+                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce"><AlertCircle size={32} /></div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Thông báo</h3>
-                    <p className="text-gray-600 mb-6">
-                        Mỗi tài khoản chỉ được chọn tối đa <span className="font-bold text-red-600">4 vé</span> cho mỗi lần đặt để đảm bảo quyền lợi cho các cổ động viên khác.
-                    </p>
-                    
-                    <button 
-                        onClick={() => setShowLimitModal(false)}
-                        className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition"
-                    >
-                        Đã hiểu
-                    </button>
+                    <p className="text-gray-600 mb-6">Mỗi tài khoản chỉ được chọn tối đa <span className="font-bold text-red-600">4 vé</span>.</p>
+                    <button onClick={() => setShowLimitModal(false)} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition">Đã hiểu</button>
                 </div>
             </div>
         )}
 
-        {/* Header */}
         <div className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-sm">
             <div className="container mx-auto px-6 py-4">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-6">
-                        <Link to="/matches" className="p-2 hover:bg-gray-100 rounded-full transition"><ChevronLeft/></Link>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                {matchInfo.home} <span className="text-gray-400">vs</span> {matchInfo.away}
-                            </h2>
-                            <div className="flex gap-4 text-sm text-gray-500 mt-1">
-                                <span className="flex items-center gap-1"><MapPin size={14}/> {matchInfo.stadium}</span>
-                                <span className="flex items-center gap-1"><Calendar size={14}/> {matchInfo.date}</span>
-                                <span className="flex items-center gap-1"><Clock size={14}/> {matchInfo.time}</span>
-                            </div>
+                <div className="flex items-center gap-6">
+                    <Link to="/matches" className="p-2 hover:bg-gray-100 rounded-full transition"><ChevronLeft/></Link>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            {match.home_team} <span className="text-gray-400">vs</span> {match.away_team}
+                        </h2>
+                        <div className="flex gap-4 text-sm text-gray-500 mt-1">
+                            <span className="flex items-center gap-1"><MapPin size={14}/> {match.stadium_name}</span>
+                            <span className="flex items-center gap-1"><Calendar size={14}/> {formatDate(match.start_time)}</span>
                         </div>
                     </div>
                 </div>
@@ -198,184 +269,108 @@ export default function MatchDetailPage() {
         <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col lg:flex-row gap-6 h-[80vh]">
                 
-                {/* === CỘT TRÁI: SƠ ĐỒ SÂN / GHẾ === */}
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col">
-                    
-                    {/* Toolbar */}
                     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 bg-white p-1.5 rounded-lg shadow-lg border border-gray-200">
-                        <button onClick={handleZoomIn} className="p-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors" title="Phóng to"><ZoomIn size={20}/></button>
-                        <button onClick={handleZoomOut} className="p-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors" title="Thu nhỏ"><ZoomOut size={20}/></button>
-                        <button onClick={handleResetZoom} className="p-2 hover:bg-gray-100 rounded-md text-gray-700 transition-colors" title="Mặc định"><RotateCcw size={20}/></button>
+                        <button onClick={handleZoomIn} className="p-2 hover:bg-gray-100 rounded-md text-gray-700"><ZoomIn size={20}/></button>
+                        <button onClick={handleZoomOut} className="p-2 hover:bg-gray-100 rounded-md text-gray-700"><ZoomOut size={20}/></button>
+                        <button onClick={handleResetZoom} className="p-2 hover:bg-gray-100 rounded-md text-gray-700"><RotateCcw size={20}/></button>
                     </div>
 
-                    {/* Header Khu vực */}
                     <div className="p-4 border-b border-gray-100 bg-gray-50/50 text-center relative z-10">
                         {viewMode === "stadium" ? (
-                            <h2 className="font-bold text-lg text-gray-800">Sơ đồ sân vận động</h2>
+                            <div className="flex items-center justify-center gap-2">
+                                <h2 className="font-bold text-lg text-gray-800">Sơ đồ sân vận động</h2>
+                                {zoneFilter && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1 cursor-pointer" onClick={() => setZoneFilter(null)}>Lọc: Khán đài {zoneFilter} <X size={12}/></span>}
+                            </div>
                         ) : (
                             <div className="flex items-center justify-center gap-2">
-                                <button onClick={handleBackToStadium} className="text-sm text-blue-600 hover:underline flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-blue-100 shadow-sm"><ChevronLeft size={16}/> Quay lại sơ đồ</button>
+                                <button onClick={handleBackToStadium} className="text-sm text-blue-600 hover:underline flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-blue-100 shadow-sm"><ChevronLeft size={16}/> Chọn khu vực khác</button>
                                 <span className="text-gray-300">|</span>
-                                <h2 className="font-bold text-lg text-gray-800">Khu vực {selectedZone?.name}</h2>
+                                <h2 className="font-bold text-lg text-gray-800">{selectedConfig?.zoneName}</h2>
                             </div>
                         )}
                     </div>
 
-                    {/* MAIN VIEWPORT */}
-                    <div className="flex-1 bg-white relative overflow-hidden flex items-center justify-center p-4 select-none">
+                    <div className="flex-1 bg-gray-50 relative overflow-hidden flex items-center justify-center p-4 select-none">
                         <div style={{ transform: `scale(${zoomLevel})`, transition: "transform 0.3s ease" }} className="w-full h-full flex items-center justify-center relative">
-                            
-                            {/* VIEW 1: TOÀN CẢNH SÂN */}
                             {viewMode === "stadium" && (
                                 <div className="relative w-[800px] h-[500px]">
-                                    {/* Sân cỏ */}
                                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[55%] h-[40%] bg-green-600 rounded-[30px] border-4 border-white flex items-center justify-center shadow-xl z-0">
-                                        <div className="w-full h-[1px] bg-white/50 absolute"></div>
-                                        <div className="w-[1px] h-full bg-white/50 absolute"></div>
-                                        <div className="w-20 h-20 border border-white/50 rounded-full absolute"></div>
-                                        <div className="w-[15%] h-[40%] border border-white/50 absolute left-0"></div>
-                                        <div className="w-[15%] h-[40%] border border-white/50 absolute right-0"></div>
+                                        <div className="w-full h-[1px] bg-white/50 absolute"></div><div className="w-[1px] h-full bg-white/50 absolute"></div><div className="w-20 h-20 border border-white/50 rounded-full absolute"></div>
                                     </div>
-                                    
-                                    {/* Các khu vực */}
                                     {zones.map((zone) => (
                                         <div 
-                                            key={zone.id}
-                                            onClick={() => handleZoneClick(zone)}
-                                            className={`absolute cursor-pointer flex items-center justify-center text-white font-bold text-xs md:text-sm shadow-md hover:scale-105 hover:brightness-110 transition-all duration-200 z-10 rounded-md border border-white/20 ${zone.style.bg}`}
-                                            style={{
-                                                top: zone.style.top, bottom: zone.style.bottom, left: zone.style.left, right: zone.style.right,
-                                                width: zone.style.width, height: zone.style.height, borderRadius: zone.style.borderRadius
-                                            }}
+                                            key={zone.id} onClick={() => handleMapZoneClick(zone.group)}
+                                            className={`absolute cursor-pointer flex items-center justify-center text-white font-bold text-xs md:text-sm shadow-md hover:scale-105 hover:brightness-110 transition-all duration-200 z-10 rounded-md border border-white/20 ${zone.style.bg} ${zoneFilter && zoneFilter !== zone.group ? 'opacity-30 grayscale' : 'opacity-100'}`}
+                                            style={{ top: zone.style.top, bottom: zone.style.bottom, left: zone.style.left, right: zone.style.right, width: zone.style.width, height: zone.style.height }}
                                         >
                                             {zone.name}
                                         </div>
                                     ))}
-
-                                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 font-bold text-gray-300 text-sm">Khán đài B</div>
-                                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 font-bold text-gray-300 text-sm">Khán đài A</div>
                                 </div>
                             )}
 
-                            {/* VIEW 2: CHI TIẾT GHẾ & HƯỚNG SÂN */}
                             {viewMode === "zone" && (
                                 <div className="flex flex-col items-center justify-center w-full h-full">
-                                    
-                                    {/* HƯỚNG SÂN: Nếu ngồi khán đài A (Top) -> Hướng sân ở DƯỚI */}
-                                    {selectedZone.side === 'top' && (
+                                    {isLoadingSeats ? (
+                                        <div className="flex items-center gap-2 text-gray-500"><Loader2 className="animate-spin"/> Đang tải trạng thái ghế...</div>
+                                    ) : (
                                         <>
-                                            <div className="grid gap-2 md:gap-3 p-6 bg-white border border-gray-200 rounded-xl shadow-sm inline-grid" style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}>
-                                                {renderSeats(selectedZone)}
+                                            {/* CHÚ THÍCH TRẠNG THÁI GHẾ (ĐÃ CẬP NHẬT MÀU ĐỎ) */}
+                                            <div className="flex gap-4 mb-4 text-xs font-medium bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
+                                                <div className="flex items-center gap-2"><div className="w-4 h-4 border border-gray-300 rounded bg-white"></div> Trống</div>
+                                                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-500 rounded text-white flex items-center justify-center"><X size={12}/></div> Đã bán</div>
+                                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{backgroundColor: selectedConfig?.color}}></div> Đang chọn</div>
                                             </div>
-                                            <div className="w-[60%] h-10 bg-gray-100 rounded-b-2xl text-gray-400 font-bold flex items-center justify-center shadow-inner text-xs gap-1 mt-4">
-                                                <ArrowDown size={14}/> HƯỚNG SÂN <ArrowDown size={14}/>
+
+                                            <div className="grid gap-3 p-6 bg-white border border-gray-200 rounded-xl shadow-sm inline-grid" style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}>
+                                                {renderSeats()}
+                                            </div>
+                                            
+                                            <div className="mt-4 text-center text-sm text-gray-500">
+                                                <div className="w-[60%] h-8 bg-gray-100 rounded-full mx-auto flex items-center justify-center text-xs text-gray-400 font-bold shadow-inner mb-2">HƯỚNG SÂN</div>
+                                                <p>Đang chọn: <span className="font-bold" style={{color: selectedConfig?.color}}>{selectedConfig?.name}</span></p>
                                             </div>
                                         </>
                                     )}
-
-                                    {/* HƯỚNG SÂN: Nếu ngồi khán đài B (Bottom) -> Hướng sân ở TRÊN */}
-                                    {selectedZone.side === 'bottom' && (
-                                        <>
-                                            <div className="w-[60%] h-10 bg-gray-100 rounded-t-2xl text-gray-400 font-bold flex items-center justify-center shadow-inner text-xs gap-1 mb-4">
-                                                <ArrowUp size={14}/> HƯỚNG SÂN <ArrowUp size={14}/>
-                                            </div>
-                                            <div className="grid gap-2 md:gap-3 p-6 bg-white border border-gray-200 rounded-xl shadow-sm inline-grid" style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}>
-                                                {renderSeats(selectedZone)}
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {/* HƯỚNG SÂN: Nếu ngồi khán đài C (Left) -> Hướng sân ở PHẢI */}
-                                    {selectedZone.side === 'left' && (
-                                        <div className="flex items-center gap-4">
-                                            <div className="grid gap-2 p-4 bg-white border border-gray-200 rounded-xl shadow-sm" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                                                {renderSeats(selectedZone)}
-                                            </div>
-                                            <div className="h-40 w-10 bg-gray-100 rounded-r-2xl text-gray-400 font-bold flex flex-col items-center justify-center shadow-inner text-xs gap-2 writing-vertical-lr">
-                                                <ArrowRight size={14}/> <span className="rotate-90">HƯỚNG SÂN</span> <ArrowRight size={14}/>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* HƯỚNG SÂN: Nếu ngồi khán đài D (Right) -> Hướng sân ở TRÁI */}
-                                    {selectedZone.side === 'right' && (
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-40 w-10 bg-gray-100 rounded-l-2xl text-gray-400 font-bold flex flex-col items-center justify-center shadow-inner text-xs gap-2">
-                                                <ArrowLeft size={14}/> <span className="rotate-[-90deg] whitespace-nowrap">HƯỚNG SÂN</span> <ArrowLeft size={14}/>
-                                            </div>
-                                            <div className="grid gap-2 p-4 bg-white border border-gray-200 rounded-xl shadow-sm" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                                                {renderSeats(selectedZone)}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="mt-6 flex justify-center gap-8 text-xs font-medium">
-                                        <div className="flex items-center gap-2"><div className="w-5 h-5 border border-gray-300 rounded bg-white shadow-sm"></div> Trống</div>
-                                        <div className="flex items-center gap-2"><div className="w-5 h-5 bg-gray-300 rounded shadow-sm"></div> Đã đặt</div>
-                                        <div className="flex items-center gap-2"><div className="w-5 h-5 bg-green-600 rounded shadow-sm"></div> Đang chọn</div>
-                                    </div>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* === CỘT PHẢI: DANH SÁCH VÉ === */}
                 <div className="w-full lg:w-80 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden h-full">
                     <div className="p-4 border-b border-gray-100 bg-red-50">
-                        <h3 className="font-bold text-gray-800 text-lg">Danh sách vé</h3>
-                        <p className="text-xs text-gray-500">Chọn loại vé để xem vị trí</p>
+                        <h3 className="font-bold text-gray-800 text-lg">Chọn vé</h3>
+                        <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
+                            <span>{zoneFilter ? `Lọc: Khu vực ${zoneFilter}` : "Hiển thị tất cả khu vực"}</span>
+                            {zoneFilter && <button onClick={handleClearFilter} className="text-blue-600 hover:underline font-medium">Xem tất cả</button>}
+                        </div>
                     </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {ticketTypes.map((ticket) => (
-                            <div 
-                                key={ticket.id} 
-                                onClick={() => handleTicketTypeClick(ticket.targetZone)}
-                                className="group border border-gray-200 rounded-xl p-4 hover:border-blue-500 hover:shadow-md transition cursor-pointer relative overflow-hidden bg-white"
-                            >
-                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${ticket.color}`}></div>
-                                
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded ${ticket.color}`}>
-                                        {ticket.id}
-                                    </span>
-                                    <Info size={16} className="text-gray-300 hover:text-blue-500"/>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        {displayedConfigs.length > 0 ? displayedConfigs.map((config) => (
+                            <div key={config.id} onClick={() => handleConfigClick(config)} className={`group border rounded-xl p-4 hover:shadow-md transition cursor-pointer relative overflow-hidden ${selectedConfig?.id === config.id ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
+                                <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: config.color }}></div>
+                                <div className="flex justify-between items-start mb-1">
+                                    <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded" style={{ backgroundColor: config.color }}>{config.name}</span>
+                                    {selectedConfig?.id === config.id && <Check size={16} className="text-blue-600"/>}
                                 </div>
-                                
-                                <h4 className="font-bold text-gray-900 mb-1">{ticket.name}</h4>
+                                <h4 className="font-bold text-gray-900 text-sm mb-1">{config.zoneName}</h4>
                                 <div className="flex justify-between items-end">
-                                    <div>
-                                        <p className="text-lg font-bold text-red-600">{ticket.price.toLocaleString()} VND</p>
-                                        <p className="text-[10px] text-gray-400">(Gồm 8% VAT)</p>
-                                    </div>
+                                    <p className="text-lg font-bold text-red-600">{config.price.toLocaleString()}đ</p>
+                                    <p className="text-[10px] text-gray-500">Còn {config.quantity - config.sold}</p>
                                 </div>
-                                
-                                <p className="text-xs text-blue-600 mt-3 font-medium group-hover:underline text-right flex items-center justify-end gap-1">
-                                    <Check size={12}/> Chọn trên sơ đồ
-                                </p>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="text-center text-gray-400 py-10"><p>Không có vé nào ở khu vực này.</p>{zoneFilter && <button onClick={handleClearFilter} className="text-blue-600 text-sm underline mt-2">Xem tất cả</button>}</div>
+                        )}
                     </div>
                     <div className="p-4 border-t border-gray-200 bg-gray-50">
-                        <button
-                            onClick={() => {
-                            if (cartItems.length === 0) return;
-                            navigate('/cart'); }}
-                            disabled={cartItems.length === 0}
-                            className="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <ShoppingCart size={18}/> Mua ngay
-                        </button>
+                        <button onClick={() => { if (cartItems.length > 0) navigate('/cart'); }} disabled={cartItems.length === 0} className="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><ShoppingCart size={18}/> Giỏ hàng ({cartItems.length})</button>
                     </div>                         
                 </div>
             </div>
-
-            {/* --- KHU VỰC BÌNH LUẬN (MỚI) --- */}
-            <div className="mt-12">
-                <CommentSection matchId={id} />
-            </div>
-
+            <div className="mt-12"><CommentSection matchId={id} /></div>
         </div>
       </div>
     </UserLayout>

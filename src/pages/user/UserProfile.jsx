@@ -1,125 +1,158 @@
 import React, { useState, useEffect } from "react";
-import { Save, Edit3, User, Phone, Mail, CheckCircle, AlertCircle, X, Key } from "lucide-react";
+import { Save, Edit3, User, Phone, Mail, CheckCircle, AlertCircle, X, Key, Loader2, AlertTriangle } from "lucide-react";
+
+const API_URL = "http://localhost:5000/api/users";
 
 export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("view"); 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  // Dữ liệu người dùng gốc
-  const [currentUser, setCurrentUser] = useState({
-    name: "Minh Thắng Đỗ",
-    phone: "0912345678",
-    email: "thang123@gmail.com",
-    gender: "Nam",
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // --- STATE USER & FORM ---
+  const [currentUser, setCurrentUser] = useState(null);
+  const [formData, setFormData] = useState({
+      full_name: "", phone: "", email: "", gender: "Nam", // Thêm giới tính nếu muốn mở rộng DB sau này
+      password: "", confirmPassword: ""
   });
-
-  // State Form Thông tin
-  const [formData, setFormData] = useState({ ...currentUser });
   
-  // State Form Mật khẩu (Tách riêng để dễ quản lý)
-  const [passwordData, setPasswordData] = useState({ newPass: "", confirmPass: "" });
-  
-  const [error, setError] = useState("");
+  const [notification, setNotification] = useState(null);
 
-  // Reset khi chuyển tab hoặc mở lại
+  // --- HELPERS ---
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // --- 1. FETCH DATA ---
   useEffect(() => {
-    if (activeTab === 'edit') {
-        setFormData({ ...currentUser });
-        setPasswordData({ newPass: "", confirmPass: "" }); // Reset mật khẩu
-        setError("");
+    const fetchUserData = async () => {
+        setIsLoading(true);
+        try {
+            // Lấy user từ localStorage (để lấy ID)
+            const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+            if (!storedUser) return;
+
+            // Gọi API lấy thông tin mới nhất từ DB
+            const res = await fetch(`${API_URL}`); // API này đang trả về ALL users, nên cần lọc (hoặc viết API getById)
+            // Trong thực tế nên dùng: fetch(`${API_URL}/${storedUser.id}`)
+            
+            const data = await res.json();
+            // Tìm user hiện tại trong danh sách (Tạm thời)
+            const myUser = data.find(u => u.id === storedUser.id);
+
+            if (myUser) {
+                setCurrentUser(myUser);
+                setFormData({
+                    full_name: myUser.full_name,
+                    email: myUser.email,
+                    phone: myUser.phone,
+                    gender: "Nam", // DB chưa có cột này, để mặc định
+                    password: "",
+                    confirmPassword: ""
+                });
+            }
+        } catch (error) {
+            console.error("Lỗi tải thông tin:", error);
+            showNotification("Không thể tải thông tin cá nhân", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Reset form khi chuyển tab
+  useEffect(() => {
+    if (activeTab === 'edit' && currentUser) {
+        setFormData(prev => ({
+            ...prev,
+            full_name: currentUser.full_name,
+            phone: currentUser.phone,
+            password: "",
+            confirmPassword: ""
+        }));
     }
   }, [activeTab, currentUser]);
 
-  // Handle change thông tin
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError("");
   };
 
-  // Handle change mật khẩu
-  const handlePassChange = (e) => {
-    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
-    if (error) setError("");
-  };
-
-  // Xử lý lưu
-  const handleSave = (e) => {
+  // --- 2. UPDATE DATA ---
+  const handleSave = async (e) => {
     e.preventDefault();
 
-    // --- 1. VALIDATE THÔNG TIN CƠ BẢN ---
-    if (!formData.name.trim() || !formData.phone.trim()) {
-        setError("Vui lòng không để trống Họ tên hoặc Số điện thoại!");
+    // VALIDATE
+    if (!formData.full_name.trim() || !formData.phone.trim()) {
+        showNotification("Vui lòng không để trống Họ tên hoặc Số điện thoại!", "error");
+        return;
+    }
+    if (!/^0\d{9}$/.test(formData.phone)) {
+        showNotification("Số điện thoại không hợp lệ (10 số)!", "error");
         return;
     }
 
-    // Validate SĐT: Phải là số và đủ 10 ký tự
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formData.phone)) {
-        setError("Số điện thoại không hợp lệ (phải bao gồm 10 chữ số)!");
-        return;
-    }
+    // Logic đổi mật khẩu (nếu có nhập)
+    let payload = {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        role: currentUser.role,      // Giữ nguyên quyền
+        status: currentUser.status,  // Giữ nguyên trạng thái
+        avatar_url: currentUser.avatar_url
+    };
 
-    // --- 2. VALIDATE MẬT KHẨU (Nếu người dùng có nhập) ---
-    let isPasswordChanged = false;
-    if (passwordData.newPass.length > 0) {
-        if (passwordData.newPass.length < 6) {
-            setError("Mật khẩu mới phải có ít nhất 6 ký tự!");
-            return;
+    // Nếu nhập mật khẩu mới
+    /* Lưu ý: API hiện tại chưa hỗ trợ đổi pass riêng, 
+       nhưng nếu bạn muốn gửi password lên thì bỏ comment dòng dưới */
+    // if (formData.password) {
+    //    if (formData.password.length < 6) {
+    //        showNotification("Mật khẩu mới phải từ 6 ký tự!", "error"); return;
+    //    }
+    //    if (formData.password !== formData.confirmPassword) {
+    //        showNotification("Mật khẩu xác nhận không khớp!", "error"); return;
+    //    }
+    //    payload.password = formData.password;
+    // }
+
+    try {
+        const res = await fetch(`${API_URL}/${currentUser.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            showNotification("Cập nhật hồ sơ thành công!");
+            
+            // Cập nhật lại state và localStorage
+            const updatedUser = { ...currentUser, ...payload };
+            setCurrentUser(updatedUser);
+            localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+            
+            // Báo cho Header cập nhật tên
+            window.dispatchEvent(new Event("storage"));
+            
+            setActiveTab("view");
+        } else {
+            showNotification("Lỗi khi cập nhật!", "error");
         }
-        if (passwordData.newPass !== passwordData.confirmPass) {
-            setError("Mật khẩu xác nhận không khớp!");
-            return;
-        }
-        isPasswordChanged = true; // Đánh dấu là có đổi mật khẩu
+    } catch (error) {
+        showNotification("Lỗi kết nối Server!", "error");
     }
-
-    // --- 3. KIỂM TRA CÓ THAY ĐỔI GÌ KHÔNG ---
-    const isInfoChanged = (
-        formData.name !== currentUser.name ||
-        formData.phone !== currentUser.phone ||
-        formData.gender !== currentUser.gender
-    );
-
-    // Nếu KHÔNG đổi thông tin VÀ KHÔNG đổi mật khẩu -> Báo lỗi
-    if (!isInfoChanged && !isPasswordChanged) {
-        setError("Bạn chưa thay đổi thông tin nào so với ban đầu!");
-        return;
-    }
-
-    // --- 4. THÀNH CÔNG ---
-    // Cập nhật dữ liệu (Giả lập)
-    setCurrentUser({ ...formData });
-    
-    // Nếu có đổi pass thì log ra (hoặc gọi API đổi pass riêng)
-    if (isPasswordChanged) {
-        console.log("Đổi mật khẩu thành:", passwordData.newPass);
-    }
-
-    setShowSuccessModal(true);
   };
 
-  const closeSuccessModal = () => {
-    setShowSuccessModal(false);
-    setActiveTab("view");
-  };
+  if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-blue-600"/></div>;
+  if (!currentUser) return <div className="text-center p-10">Không tìm thấy thông tin người dùng.</div>;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative min-h-[500px]">
         
-        {/* --- MODAL THÀNH CÔNG --- */}
-        {showSuccessModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fadeIn">
-                <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center relative">
-                    <button onClick={closeSuccessModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                        <CheckCircle size={32}/>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Cập nhật thành công!</h3>
-                    <p className="text-gray-600 mb-6 text-sm">Thông tin hồ sơ của bạn đã được lưu lại.</p>
-                    <button onClick={closeSuccessModal} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition">
-                        Về trang hồ sơ
-                    </button>
-                </div>
+        {/* --- TOAST NOTIFICATION --- */}
+        {notification && (
+            <div className={`fixed top-24 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-white animate-in slide-in-from-top-5 duration-300 ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                {notification.type === 'success' ? <CheckCircle size={20}/> : <AlertTriangle size={20}/>}
+                <span className="font-medium">{notification.message}</span>
             </div>
         )}
 
@@ -145,11 +178,11 @@ export default function UserProfile() {
             {activeTab === "view" ? (
                 <div className="animate-fadeIn space-y-8">
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-20 h-20 rounded-full bg-gray-200 border-4 border-white shadow-md overflow-hidden">
-                            <img src="https://placehold.co/150" alt="Avatar" className="w-full h-full object-cover"/>
+                        <div className="w-20 h-20 rounded-full bg-gray-200 border-4 border-white shadow-md overflow-hidden flex items-center justify-center text-3xl font-bold text-gray-400">
+                            {currentUser.avatar_url ? <img src={currentUser.avatar_url} className="w-full h-full object-cover"/> : currentUser.full_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900">{currentUser.name}</h2>
+                            <h2 className="text-2xl font-bold text-gray-900">{currentUser.full_name}</h2>
                             <p className="text-gray-500 text-sm">Thành viên thân thiết</p>
                         </div>
                     </div>
@@ -158,7 +191,7 @@ export default function UserProfile() {
                         <div className="border-b border-gray-100 pb-4">
                             <p className="text-xs font-bold text-gray-400 uppercase mb-1">Họ và tên</p>
                             <div className="flex items-center gap-3 text-gray-900 font-medium text-lg">
-                                <User size={20} className="text-blue-600"/> {currentUser.name}
+                                <User size={20} className="text-blue-600"/> {currentUser.full_name}
                             </div>
                         </div>
                         <div className="border-b border-gray-100 pb-4">
@@ -177,9 +210,9 @@ export default function UserProfile() {
                             <p className="text-xs font-bold text-gray-400 uppercase mb-1">Giới tính</p>
                             <div className="flex items-center gap-3 text-gray-900 font-medium text-lg">
                                 <span className="inline-block w-5 h-5 rounded-full bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-bold">
-                                    {currentUser.gender === 'Nam' ? 'M' : currentUser.gender === 'Nữ' ? 'F' : 'O'}
+                                    {formData.gender === 'Nam' ? 'M' : formData.gender === 'Nữ' ? 'F' : 'O'}
                                 </span> 
-                                {currentUser.gender}
+                                {formData.gender}
                             </div>
                         </div>
                     </div>
@@ -193,58 +226,34 @@ export default function UserProfile() {
                 /* === TAB 2: EDIT MODE === */
                 <form className="space-y-6 animate-fadeIn max-w-2xl mx-auto" onSubmit={handleSave}>
                     
-                    {/* ERROR ALERT */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-2 text-sm font-medium animate-pulse">
-                            <AlertCircle size={18} className="flex-shrink-0"/> {error}
-                        </div>
-                    )}
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Họ và tên</label>
                             <input 
-                                type="text" 
-                                name="name"
-                                value={formData.name} 
-                                onChange={handleChange}
+                                type="text" name="full_name"
+                                value={formData.full_name} onChange={handleChange}
                                 className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Số điện thoại</label>
                             <input 
-                                type="text" 
-                                name="phone"
-                                value={formData.phone} 
-                                onChange={handleChange}
-                                placeholder="09xxxx (10 số)"
+                                type="text" name="phone"
+                                value={formData.phone} onChange={handleChange}
                                 className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                             />
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Email (Chỉ xem)</label>
-                            <input 
-                                type="email" 
-                                value={formData.email} 
-                                disabled 
-                                className="w-full p-3 border border-gray-200 bg-gray-100 text-gray-500 rounded-xl cursor-not-allowed"
-                            />
-                            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><AlertCircle size={10}/> Email không thể thay đổi vì lý do bảo mật.</p>
+                            <input type="email" value={formData.email} disabled className="w-full p-3 border border-gray-200 bg-gray-100 text-gray-500 rounded-xl cursor-not-allowed" />
+                            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><AlertCircle size={10}/> Email không thể thay đổi.</p>
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Giới tính</label>
                             <div className="flex gap-6 p-3 border border-gray-300 rounded-xl">
                                 {['Nam', 'Nữ', 'Khác'].map((g) => (
                                     <label key={g} className="flex items-center cursor-pointer gap-2">
-                                        <input 
-                                            type="radio" 
-                                            name="gender" 
-                                            value={g}
-                                            checked={formData.gender === g}
-                                            onChange={handleChange}
-                                            className="w-5 h-5 text-blue-600 focus:ring-blue-500"
-                                        /> 
+                                        <input type="radio" name="gender" value={g} checked={formData.gender === g} onChange={handleChange} className="w-5 h-5 text-blue-600 focus:ring-blue-500" /> 
                                         {g}
                                     </label>
                                 ))}
@@ -252,30 +261,17 @@ export default function UserProfile() {
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-gray-100">
-                        <h3 className="text-md font-bold text-gray-900 mb-4 flex items-center gap-2"><Key size={18}/> Đổi mật khẩu (Không bắt buộc)</h3>
+                    {/* PHẦN ĐỔI MẬT KHẨU (UI ONLY - VÌ API CHƯA HỖ TRỢ) */}
+                    <div className="pt-6 border-t border-gray-100 opacity-50 pointer-events-none" title="Tính năng đang phát triển">
+                        <h3 className="text-md font-bold text-gray-900 mb-4 flex items-center gap-2"><Key size={18}/> Đổi mật khẩu (Sắp ra mắt)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Mật khẩu mới</label>
-                                <input 
-                                    type="password" 
-                                    name="newPass"
-                                    value={passwordData.newPass}
-                                    onChange={handlePassChange}
-                                    placeholder="Ít nhất 6 ký tự" 
-                                    className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-blue-500 transition"
-                                />
+                                <input type="password" name="password" disabled className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50" />
                             </div>
                              <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Xác nhận</label>
-                                <input 
-                                    type="password" 
-                                    name="confirmPass"
-                                    value={passwordData.confirmPass}
-                                    onChange={handlePassChange}
-                                    placeholder="Nhập lại mật khẩu mới" 
-                                    className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-blue-500 transition"
-                                />
+                                <input type="password" name="confirmPassword" disabled className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50" />
                             </div>
                         </div>
                     </div>

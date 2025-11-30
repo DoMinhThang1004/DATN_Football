@@ -8,17 +8,20 @@ export default function CommentSection({ matchId }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Lấy thông tin User đang đăng nhập
+  // 1. Lấy thông tin User đang đăng nhập (ĐÃ SỬA)
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser"); // Hoặc key bạn dùng lưu user
+    const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Lỗi parse user", e);
+      }
     }
   }, []);
 
-  // 2. Lấy danh sách bình luận của trận đấu này (Mock API)
+  // 2. Lấy danh sách bình luận (Mock API)
   useEffect(() => {
-    // fetch(`/api/matches/${matchId}/comments`)
     setTimeout(() => {
       setComments([
         { id: 1, user: "Nguyễn Văn A", avatar: null, content: "Trận này Việt Nam thắng chắc 3-0!", date: "2025-11-20 10:00", rating: 5 },
@@ -28,6 +31,11 @@ export default function CommentSection({ matchId }) {
     }, 500);
   }, [matchId]);
 
+  // --- XỬ LÝ TÊN & AVATAR AN TOÀN (MỚI THÊM) ---
+  const displayName = user ? (user.full_name || user.name || "User") : "";
+  const displayAvatar = user ? (user.avatar_url || user.avatar) : null;
+  const firstChar = displayName ? displayName.charAt(0).toUpperCase() : "U";
+
   // 3. Xử lý gửi bình luận
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,20 +43,18 @@ export default function CommentSection({ matchId }) {
 
     const newCommentObj = {
       id: Date.now(),
-      user: user?.name || "Tôi", // Lấy tên user đang login
-      avatar: user?.avatar,
+      user: displayName, // Dùng tên hiển thị đã xử lý
+      avatar: displayAvatar,
       content: newComment,
       date: new Date().toLocaleString('vi-VN'),
-      rating: 5, // Mặc định 5 sao (hoặc làm thêm UI chọn sao)
-      isNew: true // Đánh dấu để highlight
+      rating: 5,
+      isNew: true
     };
 
-    // Thêm vào đầu danh sách
     setComments([newCommentObj, ...comments]);
     setNewComment("");
     
     // TODO: Gọi API lưu xuống database
-    // axios.post('/api/comments', { matchId, content: newComment, userId: user.id ... })
   };
 
   return (
@@ -60,13 +66,19 @@ export default function CommentSection({ matchId }) {
       {/* --- FORM NHẬP BÌNH LUẬN --- */}
       {user ? (
         <form onSubmit={handleSubmit} className="mb-8 flex gap-4">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 font-bold">
-            {user.avatar ? <img src={user.avatar} className="w-full h-full rounded-full object-cover"/> : user.name.charAt(0).toUpperCase()}
+          {/* Avatar người dùng đang đăng nhập */}
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 font-bold border border-blue-200 overflow-hidden">
+            {displayAvatar ? (
+                <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover"/>
+            ) : (
+                <span>{firstChar}</span>
+            )}
           </div>
+          
           <div className="flex-1 relative">
             <textarea
               className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm min-h-[80px]"
-              placeholder={`Chia sẻ cảm nghĩ của bạn về trận đấu này, ${user.name}...`}
+              placeholder={`Chia sẻ cảm nghĩ của bạn về trận đấu này, ${displayName}...`}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
             ></textarea>
@@ -105,7 +117,6 @@ export default function CommentSection({ matchId }) {
                                 <span className="font-bold text-gray-900 text-sm">{comment.user}</span>
                                 <span className="text-xs text-gray-400 ml-2">{comment.date}</span>
                             </div>
-                            {/* Mock Rating Stars */}
                             <div className="flex text-yellow-400">
                                 {[...Array(5)].map((_, i) => (
                                     <Star key={i} size={12} fill={i < comment.rating ? "currentColor" : "none"} className={i >= comment.rating ? "text-gray-300" : ""}/>
@@ -116,7 +127,6 @@ export default function CommentSection({ matchId }) {
                             {comment.content}
                         </p>
                     </div>
-                    {/* Nút Thích / Trả lời (UI only) */}
                     <div className="flex gap-4 mt-1 ml-2 text-xs text-gray-500 font-medium">
                         <button className="hover:text-blue-600">Thích</button>
                         <button className="hover:text-blue-600">Trả lời</button>

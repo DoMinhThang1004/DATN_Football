@@ -1,25 +1,29 @@
 import React, { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Facebook, CheckCircle, Smartphone, MessageSquare, X } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Facebook, CheckCircle, Smartphone, MessageSquare, X, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
+
+// API URL (Backend thật)
+const LOGIN_API = "http://localhost:5000/api/users/login";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   
-  // --- STATE ĐĂNG NHẬP ---
+  // --- STATE ---
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoginSuccess, setIsLoginSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // --- STATE QUÊN MẬT KHẨU (MODAL) ---
+  // State Modal Quên mật khẩu
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotMethod, setForgotMethod] = useState("email");
   const [forgotInput, setForgotInput] = useState("");
   const [isForgotSubmitted, setIsForgotSubmitted] = useState(false);
   const [forgotError, setForgotError] = useState("");
 
-  // --- XỬ LÝ ĐĂNG NHẬP ---
+  // --- HANDLERS ---
   const handleLoginChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (loginError) setLoginError(""); 
@@ -28,44 +32,60 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    // 1. Validate cơ bản: Kiểm tra rỗng
+    // 1. Validate cơ bản
     if (!formData.email.trim() || !formData.password) {
         setLoginError("Vui lòng nhập đầy đủ email và mật khẩu!");
         return;
     }
-
-    // 2. Validate độ dài mật khẩu (THÊM MỚI)
     if (formData.password.length < 6) {
         setLoginError("Mật khẩu phải có ít nhất 6 ký tự!");
         return;
     }
 
-    try {
-        // ============================================================
-        // TODO: GỌI API ĐĂNG NHẬP TẠI ĐÂY (Thay thế đoạn code mock bên dưới)
-        // const res = await api.post('/auth/login', formData);
-        // localStorage.setItem('token', res.data.token);
-        // localStorage.setItem('user', JSON.stringify(res.data.user));
-        // ============================================================
+    setIsLoading(true);
 
-        // --- MOCK DATA (Giả lập thành công) ---
-        console.log("Login Data:", formData);
+    try {
+        // 2. GỌI API ĐĂNG NHẬP THẬT
+        const res = await fetch(LOGIN_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            // Nếu lỗi (401, 404, 500...) -> Ném ra lỗi để catch bắt được
+            throw new Error(data.message || "Đăng nhập thất bại");
+        }
+
+        // 3. XỬ LÝ THÀNH CÔNG
+        // Lưu thông tin user vào localStorage
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
         
-        // Hiệu ứng thành công
+        // Hiển thị modal thành công
         setIsLoginSuccess(true);
-        setTimeout(() => navigate("/home"), 1500);
+        
+        // 4. PHÂN QUYỀN CHUYỂN HƯỚNG
+        setTimeout(() => {
+            if (data.user.role === 'ADMIN' || data.user.role === 'STAFF') {
+                navigate("/admin/dashboard");
+            } else {
+                navigate("/");
+            }
+        }, 1500);
 
     } catch (err) {
-        // Xử lý lỗi từ API (ví dụ: sai mật khẩu)
-        setLoginError(err.response?.data?.message || "Đăng nhập thất bại");
+        // Hiển thị lỗi từ Server trả về (VD: Sai mật khẩu)
+        setLoginError(err.message);
+    } finally {
+        setIsLoading(false);
     }
   };
 
-  // --- XỬ LÝ QUÊN MẬT KHẨU ---
+  // --- XỬ LÝ QUÊN MẬT KHẨU (GIỮ NGUYÊN LOGIC CŨ VÌ CHƯA CÓ API NÀY) ---
   const handleForgotSubmit = (e) => {
     e.preventDefault();
-    
-    // Validate
     if (forgotMethod === "email") {
         if (!forgotInput.trim()) { setForgotError("Vui lòng nhập email!"); return; }
         if (!/\S+@\S+\.\S+/.test(forgotInput)) { setForgotError("Email không hợp lệ!"); return; }
@@ -74,12 +94,7 @@ export default function LoginPage() {
         if (!forgotInput.trim()) { setForgotError("Vui lòng nhập số điện thoại!"); return; }
         if (!/^0[3|5|7|8|9][0-9]{8}$/.test(forgotInput)) { setForgotError("SĐT không hợp lệ (10 số)!"); return; }
     }
-
-    // ============================================================
-    // TODO: GỌI API QUÊN MẬT KHẨU TẠI ĐÂY
-    // await api.post('/auth/forgot-password', { method: forgotMethod, value: forgotInput });
-    // ============================================================
-
+    // TODO: Gọi API forgot-password thật sau này
     setIsForgotSubmitted(true);
     setForgotError("");
   };
@@ -93,16 +108,14 @@ export default function LoginPage() {
 
   return (
     <UserLayout>
-      <div className="min-h-screen flex w-full relative">
+      <div className="min-h-screen flex w-full relative bg-gray-50">
         
-        {/* ================= MODAL QUÊN MẬT KHẨU ================= */}
+        {/* Modal Quên Mật Khẩu */}
         {showForgotModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={toggleForgotModal}></div>
-                
                 <div className="bg-white w-full max-w-lg p-8 rounded-3xl shadow-2xl relative z-10 animate-fadeIn">
                     <button onClick={toggleForgotModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1"><X size={24} /></button>
-                    
                     <div className="text-center mb-6 mt-2">
                         <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             {isForgotSubmitted ? <CheckCircle size={32}/> : (forgotMethod === 'email' ? <Mail size={32}/> : <Smartphone size={32}/>)}
@@ -112,7 +125,6 @@ export default function LoginPage() {
                             {isForgotSubmitted ? `Mã xác nhận đã được gửi tới ${forgotMethod === 'email' ? 'email' : 'SĐT'} của bạn.` : "Chọn phương thức để nhận mã OTP đặt lại mật khẩu."}
                         </p>
                     </div>
-
                     {!isForgotSubmitted ? (
                         <form onSubmit={handleForgotSubmit} className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
@@ -144,7 +156,7 @@ export default function LoginPage() {
             </div>
         )}
 
-        {/* ================= GIAO DIỆN CHÍNH ================= */}
+        {/* Giao diện chính */}
         <div className="hidden lg:flex w-1/2 bg-gray-900 relative justify-center items-center overflow-hidden">
             <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://placehold.co/1000x1000/1e293b/FFFFFF?text=Football+Stadium')" }}></div>
             <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 to-black/50"></div>
@@ -175,28 +187,20 @@ export default function LoginPage() {
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleLoginChange} placeholder="••••••••" className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
-                            <button
-                                type="button" onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
-                        
-                        {/* --- NÚT QUÊN MẬT KHẨU --- */}
                         <div className="flex justify-end mt-2">
-                            <button 
-                                type="button" 
-                                onClick={toggleForgotModal} 
-                                className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline transition-colors bg-transparent border-none p-0 cursor-pointer"
-                            >
-                                Quên mật khẩu?
-                            </button>
+                            <button type="button" onClick={() => setShowForgotModal(true)} className="text-sm font-medium text-blue-600 hover:underline">Quên mật khẩu?</button>
                         </div>
                     </div>
 
-                    {loginError && <div className="bg-red-50 text-red-500 text-sm p-3 rounded-lg text-center">{loginError}</div>}
+                    {loginError && <div className="bg-red-50 text-red-500 text-sm p-3 rounded-lg text-center border border-red-100">{loginError}</div>}
 
-                    <button type="submit" className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition shadow-lg">Đăng nhập <ArrowRight size={18} className="inline ml-1"/></button>
+                    <button type="submit" disabled={isLoading} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition shadow-lg flex justify-center items-center gap-2 disabled:opacity-70">
+                        {isLoading ? <Loader2 className="animate-spin"/> : <>Đăng nhập <ArrowRight size={18}/></>}
+                    </button>
                 </form>
 
                 <div className="mt-6">
@@ -210,7 +214,7 @@ export default function LoginPage() {
             </div>
         </div>
 
-        {/* Modal Thành công */}
+        {/* Modal Success */}
         {isLoginSuccess && (
             <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center backdrop-blur-sm animate-fadeIn">
                 <div className="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center max-w-sm w-full mx-4">
