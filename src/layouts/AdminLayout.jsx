@@ -4,7 +4,6 @@ import TopNav from "../components/admin/Topnav";
 
 export default function AdminLayout({ children }) {
   return (
-    //chiều cao bằng màn hình,không cuộn cả trang 
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
       
       <div className="flex-none">

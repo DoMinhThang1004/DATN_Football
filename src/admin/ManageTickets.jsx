@@ -4,11 +4,11 @@ import {
   Plus, Tag, Edit, Trash2, X, Save, Loader2, AlertTriangle, CheckCircle 
 } from "lucide-react";
 
-// API URL
+// api
 const API_URL = "http://localhost:5000/api/ticket-types";
 
 export default function ManageTickets() {
-  // --- STATE ---
+  // state quản lý
   const [types, setTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -18,7 +18,7 @@ export default function ManageTickets() {
   const [ticketToDelete, setTicketToDelete] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // Form Data (Khớp với DB: color_code, base_price)
+  // form data
   const [formData, setFormData] = useState({
     name: "", base_price: 0, color_code: "#3B82F6", description: ""
   });
@@ -28,7 +28,7 @@ export default function ManageTickets() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // --- FETCH DATA ---
+  // lấy dl
   const fetchTicketTypes = async () => {
     setIsLoading(true);
     try {
@@ -47,7 +47,7 @@ export default function ManageTickets() {
     fetchTicketTypes();
   }, []);
 
-  // --- HANDLERS ---
+  // mở modal thêm mới
   const handleAddNew = () => {
     setCurrentType(null);
     setFormData({ name: "", base_price: 0, color_code: "#3B82F6", description: "" });
@@ -68,7 +68,7 @@ export default function ManageTickets() {
   const handleSave = async (e) => {
     e.preventDefault();
     
-    // Validate
+    // chuẩn bị payload
     const payload = {
         ...formData,
         base_price: Number(formData.base_price) || 0
@@ -77,14 +77,14 @@ export default function ManageTickets() {
     try {
         let response;
         if (currentType) {
-            // PUT
+            //put
             response = await fetch(`${API_URL}/${currentType.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
         } else {
-            // POST
+            //post
             response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -191,8 +191,6 @@ export default function ManageTickets() {
             </div>
         )}
       </div>
-
-      {/* Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
@@ -235,8 +233,6 @@ export default function ManageTickets() {
             </div>
         </div>
       )}
-
-      {/* Modal Confirm Delete */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">

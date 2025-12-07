@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from '../components/user/Header';
 import Footer from '../components/user/Footer';
+import FloatingButtons from '../components/user/FloatingButtons.jsx';
+import ChatBox from '../components/support_user/ChatBox'; 
 
 export default function UserLayout({ children }) {
+  // lấy tt user để truyền bào chat
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    // ấy thông tin user đã đn từ localStorage
+    // lưu key là currentUser khi đăng nhập thành công
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Lỗi parse user:", e);
+      }
+    }
+  }, []);
+
+  // chuẩn bị dữ liệu props
+  const userId = currentUser?.id || null;
+  const userName = currentUser?.full_name || "Quý Khách";
+
   return (
     <div className="flex flex-col min-h-screen pt-16">
       <div className="fixed top-0 left-0 w-full z-50">
@@ -15,6 +37,13 @@ export default function UserLayout({ children }) {
       </main>
       
       <Footer />
+
+      <FloatingButtons />
+
+      <ChatBox 
+        userId={userId} 
+        userFullName={userName} 
+      />
     </div>
   );
 }

@@ -3,39 +3,37 @@ import {
   Plus, MapPin, Edit, Trash2, Search, X, Save, Loader2, AlertTriangle, CheckCircle, UploadCloud, LayoutDashboard, Menu, Image as ImageIcon
 } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-// CẤU HÌNH API
+// api url
 const API_URL = "http://localhost:5000/api/stadiums";
 const UPLOAD_URL = "http://localhost:5000/api/upload"; 
 
 export default function ManageStadiums() {
-  // --- STATE ---
+  //trạng thái
   const [stadiums, setStadiums] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Modal & Notification
+  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStadium, setCurrentStadium] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [stadiumToDelete, setStadiumToDelete] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // Form Data (Đã xóa image_extra, chỉ giữ 1 image_url)
+  // form data
   const [formData, setFormData] = useState({
     name: "", location: "", capacity: 0, image_url: "", status: "ACTIVE"
   });
 
-  // Upload State
+  //cập nhật tt
   const [isUploading, setIsUploading] = useState(false);
-  const [fileName, setFileName] = useState(""); // Lưu tên file để hiển thị
-
-  // Helper Notification
+  const [fileName, setFileName] = useState(""); // tên file hiển thị
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // --- 2. FETCH DATA ---
+  //db lấy dữ liệu sân
   const fetchStadiums = async () => {
     setIsLoading(true);
     try {
@@ -46,7 +44,7 @@ export default function ManageStadiums() {
       setStadiums(data); 
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
-      // Dữ liệu mẫu giả lập nếu API lỗi
+      // dl mẫu nếu lỗi
       setStadiums([
           { id: 1, name: "Sân vận động Mỹ Đình", location: "Hà Nội", capacity: 40192, status: "ACTIVE", image_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/My_Dinh_National_Stadium.jpg/800px-My_Dinh_National_Stadium.jpg" },
           { id: 2, name: "Sân vận động Thống Nhất", location: "TP.HCM", capacity: 15000, status: "MAINTENANCE", image_url: "" }
@@ -60,8 +58,6 @@ export default function ManageStadiums() {
   useEffect(() => {
     fetchStadiums();
   }, []);
-
-  // --- HANDLERS ---
   const handleAddNew = () => {
     setCurrentStadium(null);
     setFormData({ name: "", location: "", capacity: 0, image_url: "", status: "ACTIVE" });
@@ -78,11 +74,11 @@ export default function ManageStadiums() {
         image_url: stadium.image_url || "", 
         status: stadium.status
     });
-    setFileName(""); // Reset tên file khi mở edit
+    setFileName(""); // reset tên file
     setIsModalOpen(true);
   };
 
-  // --- UPLOAD LOGIC (Đã sửa lỗi Base64 quá lớn) ---
+//upload ảnh
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -94,26 +90,25 @@ export default function ManageStadiums() {
     data.append("file", file);
 
     try {
-        // 1. Gọi API upload để lấy URL
+        //gọi api upload ảnh
         const res = await fetch(UPLOAD_URL, { method: "POST", body: data });
         
         if (!res.ok) throw new Error("API Upload failed");
 
         const result = await res.json();
         
-        // 2. Gán URL trả về vào formData
+        // cập nhật url ảnh vào form data
         setFormData(prev => ({ ...prev, image_url: result.url }));
         showNotification("Upload ảnh thành công!");
 
     } catch (error) {
         console.warn("API Upload lỗi hoặc chưa có, dùng chế độ Preview cục bộ");
         
-        // Fallback: Dùng URL tạm (blob) để hiển thị preview nếu không có server
-        // Lưu ý: Blob URL này chỉ sống trong phiên làm việc hiện tại
+        //demo chế độ preview cục bộ
         setTimeout(() => {
             const fakeUrl = URL.createObjectURL(file);
             setFormData(prev => ({ ...prev, image_url: fakeUrl }));
-            showNotification("Đã chọn ảnh (Chế độ Preview)");
+            showNotification("Đã chọn ảnh chế độ Preview");
             setIsUploading(false);
         }, 500);
         return;
@@ -121,20 +116,19 @@ export default function ManageStadiums() {
     setIsUploading(false);
   };
 
-  // --- 3. LƯU DỮ LIỆU ---
+  //lưu dl
   const handleSave = async (e) => {
     e.preventDefault();
-    
     const payload = {
         ...formData,
         capacity: Number(formData.capacity) || 0
     };
 
-    // LOG PAYLOAD RA CONSOLE ĐỂ KIỂM TRA
+    // tải payload lên console để kt
     console.log("Dữ liệu chuẩn bị gửi:", payload);
 
     try {
-        // Thử gọi API thật
+        //gọi api real
         let response;
         const url = currentStadium ? `${API_URL}/${currentStadium.id}` : API_URL;
         const method = currentStadium ? 'PUT' : 'POST';
@@ -157,7 +151,7 @@ export default function ManageStadiums() {
     } catch (error) {
         console.error("Lỗi lưu dữ liệu:", error);
         
-        // --- FALLBACK: DEMO MODE (Cập nhật UI ngay cả khi không có backend) ---
+        // quá mệt
         if (currentStadium) {
             setStadiums(prev => prev.map(s => s.id === currentStadium.id ? { ...s, ...payload } : s));
             showNotification("Đã lưu (Chế độ Demo - API lỗi)", "success");
@@ -174,11 +168,11 @@ export default function ManageStadiums() {
     setDeleteModalOpen(true);
   };
 
-  // --- 4. XÓA DỮ LIỆU ---
+  // xóa dl
   const handleDeleteExecute = async () => {
     if (!stadiumToDelete) return;
     
-    // Demo xóa trên UI trước để trải nghiệm mượt mà
+    // demo trc xem
     setStadiums(prev => prev.filter(s => s.id !== stadiumToDelete.id));
     showNotification("Đã xóa sân vận động");
     setDeleteModalOpen(false);
@@ -205,7 +199,6 @@ export default function ManageStadiums() {
                 <span className="font-medium">{notification.message}</span>
             </div>
         )}
-
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Sân vận động</h1>
@@ -219,11 +212,9 @@ export default function ManageStadiums() {
 
         <div className="mb-6 relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-                type="text" placeholder="Tìm kiếm..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <input  type="text" placeholder="Tìm kiếm..."
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
         </div>
 
         {isLoading ? (
@@ -281,7 +272,6 @@ export default function ManageStadiums() {
         )}
       </div>
 
-      {/* Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
@@ -316,7 +306,6 @@ export default function ManageStadiums() {
                         </div>
                     </div>
                     
-                    {/* KHU VỰC UPLOAD ẢNH (1 Nút duy nhất) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh sân</label>
                         <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${formData.image_url ? 'border-blue-300 bg-blue-50' : 'border-gray-300 bg-white hover:bg-gray-50'}`}>
@@ -355,7 +344,6 @@ export default function ManageStadiums() {
         </div>
       )}
 
-      {/* Modal Confirm Delete */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">

@@ -3,7 +3,7 @@ import { User, Ticket, MapPin, LogOut, Camera, Image as ImageIcon, X, Upload, Ch
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import UserLayout from "./UserLayout.jsx"; 
 
-// API URL
+// api url
 const API_BASE = "http://localhost:5000/api";
 const UPLOAD_URL = "http://localhost:5000/api/upload";
 
@@ -12,27 +12,26 @@ export default function ProfileLayout() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // --- STATE DỮ LIỆU USER ---
+  // state dl user
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- STATE UI ---
+  // state ui
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [tempFile, setTempFile] = useState(null);       
   const [tempPreview, setTempPreview] = useState(null); 
   const [isUploading, setIsUploading] = useState(false);
   
-  // State Modal Đăng xuất & Thông báo
+  // state model đăng xuất và tb
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // --- HELPERS ---
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Lấy thông tin user
+  // lấy thông tin user
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
@@ -49,8 +48,7 @@ export default function ProfileLayout() {
     { path: "/profile/address", label: "Sổ địa chỉ", icon: <MapPin size={20} /> },
   ];
 
-  // --- HÀM XỬ LÝ ---
-
+  //hàm xử lý
   const openAvatarModal = () => {
     setTempFile(null);
     setTempPreview(null); 
@@ -68,10 +66,9 @@ export default function ProfileLayout() {
 
   const handleSaveAvatar = async () => {
     if (!tempFile || !user) return;
-
     setIsUploading(true);
     try {
-        // B1: Upload ảnh
+        // úp load ảnh
         const formData = new FormData();
         formData.append("file", tempFile);
 
@@ -81,7 +78,7 @@ export default function ProfileLayout() {
         const uploadResult = await uploadRes.json();
         const newAvatarUrl = uploadResult.url;
 
-        // B2: Cập nhật DB
+        //cập nhật db
         const updatedUserData = { 
             ...user, 
             avatar_url: newAvatarUrl, 
@@ -98,13 +95,10 @@ export default function ProfileLayout() {
 
         if (!updateRes.ok) throw new Error("Lỗi cập nhật thông tin");
 
-        // B3: Cập nhật LocalStorage
+        //cập nhật localstorage
         localStorage.setItem("currentUser", JSON.stringify(updatedUserData));
         setUser(updatedUserData);
-        
         window.dispatchEvent(new Event("storage"));
-
-        // THAY ALERT BẰNG NOTIFICATION
         showNotification("Cập nhật ảnh đại diện thành công!");
         setIsAvatarModalOpen(false);
 
@@ -116,9 +110,9 @@ export default function ProfileLayout() {
     }
   };
 
-  // --- XỬ LÝ ĐĂNG XUẤT ---
+  //xử lý đăng xuất
   const handleLogoutClick = () => {
-      setShowLogoutModal(true); // Mở modal thay vì confirm
+      setShowLogoutModal(true); 
   };
 
   const confirmLogout = () => {
@@ -128,7 +122,7 @@ export default function ProfileLayout() {
     navigate("/login");
   };
 
-  // Cleanup
+  // xóa
   useEffect(() => {
     return () => {
       if (tempPreview) URL.revokeObjectURL(tempPreview);
@@ -140,8 +134,6 @@ export default function ProfileLayout() {
   return (
     <UserLayout>
       <div className="bg-gray-50 min-h-screen py-8 relative">
-        
-        {/* --- TOAST NOTIFICATION (GÓC PHẢI) --- */}
         {notification && (
             <div className={`fixed top-24 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-white animate-in slide-in-from-top-5 duration-300 ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
                 {notification.type === 'success' ? <CheckCircle size={20}/> : <AlertTriangle size={20}/>}
@@ -150,8 +142,6 @@ export default function ProfileLayout() {
         )}
 
         <div className="container mx-auto px-4">
-            
-            {/* --- MODAL CẬP NHẬT AVATAR --- */}
             {isAvatarModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fadeIn">
                     <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
@@ -165,14 +155,11 @@ export default function ProfileLayout() {
                                 <div className="w-full h-full rounded-full border-4 border-gray-100 shadow-inner overflow-hidden bg-gray-50">
                                     <img 
                                         src={tempPreview || user.avatar_url || "https://via.placeholder.com/150"} 
-                                        alt="Preview" 
-                                        className="w-full h-full object-cover"
-                                    />
+                                        alt="Preview" className="w-full h-full object-cover" />
                                 </div>
                                 <div 
                                     onClick={() => fileInputRef.current.click()}
-                                    className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center cursor-pointer transition-all"
-                                >
+                                    className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center cursor-pointer transition-all">
                                     <Camera className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={32}/>
                                 </div>
                             </div>
@@ -190,13 +177,11 @@ export default function ProfileLayout() {
                             )}
 
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-
                             <div className="grid grid-cols-2 gap-3 w-full">
                                 {!tempFile ? (
                                     <button 
                                         onClick={() => fileInputRef.current.click()}
-                                        className="col-span-2 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 flex items-center justify-center gap-2 transition"
-                                    >
+                                        className="col-span-2 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 flex items-center justify-center gap-2 transition">
                                         <Upload size={18}/> Chọn ảnh từ máy
                                     </button>
                                 ) : (
@@ -213,7 +198,7 @@ export default function ProfileLayout() {
                 </div>
             )}
 
-            {/* --- MODAL XÁC NHẬN ĐĂNG XUẤT --- */}
+            {/*  model xn đăng xuất*/}
             {showLogoutModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fadeIn">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 text-center transform transition-all scale-100 shadow-2xl">
@@ -230,11 +215,9 @@ export default function ProfileLayout() {
             )}
 
           <div className="flex flex-col md:flex-row gap-6">
-            
-            {/* === SIDEBAR TRÁI === */}
+            {/* side trái*/}
             <div className="w-full md:w-1/4">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
-                
                 <div className="p-6 text-center border-b border-gray-100 bg-gradient-to-b from-blue-50 to-white">
                     <div className="relative w-28 h-28 mx-auto mb-3">
                         <div className="w-full h-full bg-gray-200 rounded-full border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-gray-400 overflow-hidden">
@@ -248,7 +231,6 @@ export default function ProfileLayout() {
                             <Camera size={16}/>
                         </button>
                     </div>
-
                     <h3 className="font-bold text-gray-900 text-lg">{user.full_name}</h3>
                     <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
@@ -256,14 +238,12 @@ export default function ProfileLayout() {
                 <nav className="p-3 space-y-1">
                   {menuItems.map((item) => (
                     <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+                          key={item.path}to={item.path}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
                         location.pathname === item.path
                           ? "bg-blue-600 text-white shadow-md"
                           : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                      }`}
-                    >
+                      }`}>
                       {item.icon}
                       {item.label}
                     </Link>
@@ -272,16 +252,13 @@ export default function ProfileLayout() {
                   <div className="pt-2 mt-2 border-t border-gray-100">
                     <button 
                         onClick={handleLogoutClick}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium"
-                    >
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-medium">
                         <LogOut size={20} /> Đăng xuất
                     </button>
                   </div>
                 </nav>
               </div>
             </div>
-
-            {/* === NỘI DUNG BÊN PHẢI === */}
             <div className="w-full md:w-3/4">
                 <Outlet /> 
             </div>

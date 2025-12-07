@@ -5,8 +5,8 @@ const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  // 1. KHỞI TẠO STATE TỪ LOCALSTORAGE (Quan trọng)
-  // Thay vì useState([]), ta kiểm tra xem trong kho có hàng chưa
+  // khởi tạo state từ localstorage
+  // kiểm tra xem trong kho có hàng chưa
   const [cartItems, setCartItems] = useState(() => {
     try {
       const storedCart = localStorage.getItem("shoppingCart");
@@ -17,18 +17,15 @@ export const CartProvider = ({ children }) => {
     }
   });
 
-  // 2. TỰ ĐỘNG LƯU VÀO LOCALSTORAGE KHI GIỎ HÀNG THAY ĐỔI
+  //tự động lưu vào localstorage khi giỏ hàng thay đổi
   useEffect(() => {
     localStorage.setItem("shoppingCart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // --- CÁC HÀM XỬ LÝ ---
-
+  // các hàm xử lý
   const addToCart = (newItems) => {
     setCartItems((prev) => {
-      // Kiểm tra trùng lặp (nếu cần)
-      // Ở đây mình gộp mảng cũ + mới
-      // Nếu muốn chặn trùng ghế thì có thể filter trước
+      // kiểm tra trùng lặp 
       const uniqueItems = newItems.filter(
         (newItem) => !prev.some((item) => item.id === newItem.id)
       );
@@ -42,7 +39,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCartItems([]);
-    localStorage.removeItem("shoppingCart"); // Xóa sạch trong kho luôn
+    localStorage.removeItem("shoppingCart"); // xóa sạch kho
   };
 
   return (
@@ -52,8 +49,7 @@ export const CartProvider = ({ children }) => {
         addToCart,
         removeFromCart,
         clearCart,
-      }}
-    >
+      }} >
       {children}
     </CartContext.Provider>
   );

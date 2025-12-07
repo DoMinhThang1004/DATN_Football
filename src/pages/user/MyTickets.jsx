@@ -1,190 +1,402 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, MapPin, Clock, QrCode, Download, X, Ticket, CheckCircle, Ban, AlertCircle, Loader2 } from "lucide-react";
-import QRCode from "react-qr-code"; 
+import { Calendar, MapPin, Clock, QrCode, Download, X, Ticket, CheckCircle, Ban, AlertCircle, Loader2, ChevronRight, Truck, CreditCard, AlertTriangle, ArrowLeft, RefreshCcw } from "lucide-react";
+import { useNavigate } from "react-router-dom"; 
+import { useCart } from "../../context/CartContext.jsx"; 
+import OrderDetailModal from "../../components//support_user/OderDetailModel.jsx"; 
 
-const API_URL = "http://localhost:5000/api/tickets";
+const API_BASE = "http://localhost:5000/api";
+const API_ORDER = `${API_BASE}/orders`;
+
+const CANCEL_REASONS = [
+    "Thay đổi kế hoạch cá nhân",
+    "Đặt nhầm số lượng vé",
+    "Đặt nhầm trận đấu",
+    "Tìm thấy giá tốt hơn",
+    "Khác"
+];
 
 export default function MyTickets() {
-  const [tickets, setTickets] = useState([]);
+    //state
+  const navigate = useNavigate();
+  const { addToCart, clearCart } = useCart(); 
+
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("VALID"); // Giá trị khớp với DB: VALID, USED, INVALID
-  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [filter, setFilter] = useState("ALL"); 
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const fetchTickets = async () => {
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [otherReason, setOtherReason] = useState("");
+  
+  // state cho model cảnh báo ghế đã mua
+  const [unavailableSeatsModal, setUnavailableSeatsModal] = useState({ isOpen: false, seats: [], matchId: null });
+
+  // state xác nhận mua lại
+  const [reorderModalOpen, setReorderModalOpen] = useState(false);
+  const [orderToReorderId, setOrderToReorderId] = useState(null);
+
+  const [notification, setNotification] = useState(null);
+
+    const showNotification = (message, type = "success") => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 3000);
+    };
+
+    const fetchOrders = async () => {
         const storedUser = localStorage.getItem("currentUser");
-        if (!storedUser) {
-            setLoading(false);
-            return;
-        }
-        
+        if (!storedUser) { setLoading(false); return; }
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
         try {
-            console.log("Đang lấy vé cho User ID:", parsedUser.id);
-            const res = await fetch(`${API_URL}/user/${parsedUser.id}`);
-            
-            if (!res.ok) throw new Error("Lỗi tải vé");
-            
-            const data = await res.json();
-            console.log("Dữ liệu vé nhận được:", data); // Kiểm tra log này trong F12
-
-            const formattedData = data.map(t => ({
-                id: t.id,
-                match: `${t.home_team} vs ${t.away_team}`,
-                date: t.start_time ? new Date(t.start_time).toLocaleDateString('vi-VN') : "",
-                time: t.start_time ? new Date(t.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : "",
-                stadium: t.stadium_name,
-                seat: t.seat_number || "Tự do",
-                zone: t.zone_name,
-                price: Number(t.price),
-                status: t.status, // VALID, USED, INVALID
-                qrCode: t.qr_code_string,
-                image: t.home_logo 
-            }));
-
-            setTickets(formattedData);
+            const res = await fetch(`${API_ORDER}/user/${parsedUser.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data);
+            }
         } catch (error) {
-            console.error("Lỗi:", error);
+            console.error("Lỗi tải đơn hàng:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    fetchTickets();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
+  const openCancelModal = (order) => {
+      setOrderToCancel(order);
+      setCancelReason("");
+      setOtherReason("");
+      setCancelModalOpen(true);
+  };
 
-  // --- FILTER LOGIC ---
-  // Lọc dựa trên status thực tế từ DB (VALID, USED, INVALID)
-  const filteredTickets = tickets.filter(t => {
-      // Nếu filter là VALID -> Lấy vé VALID (Sắp diễn ra)
-      // Nếu filter là USED -> Lấy vé USED (Đã sử dụng)
-      // Nếu filter là INVALID -> Lấy vé INVALID (Đã hủy)
-      return t.status === filter;
+  const submitCancelOrder = async () => {
+      if (!cancelReason) {
+          showNotification("Vui lòng chọn lý do hủy!", "error");
+          return;
+      }
+      const finalReason = cancelReason === "Khác" ? otherReason : cancelReason;
+      if (!finalReason.trim()) {
+          showNotification("Vui lòng nhập lý do chi tiết!", "error");
+          return;
+      }
+      try {
+          const res = await fetch(`${API_ORDER}/cancel/${orderToCancel.id}`, { 
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason: finalReason }) 
+          });
+
+          if (res.ok) {
+              showNotification("Đã hủy đơn hàng thành công!");
+              setCancelModalOpen(false);
+              fetchOrders(); 
+          } else {
+              const err = await res.json();
+              showNotification(err.message || "Không thể hủy đơn hàng này", "error");
+          }
+      } catch (error) {
+          showNotification("Lỗi kết nối!", "error");
+      }
+  };
+
+  // bấm nút mua lại thì mở modal
+  const handleReOrderClick = (orderId) => {
+      setOrderToReorderId(orderId);
+      setReorderModalOpen(true);
+  };
+
+  //xử lý mua lại sau khi đồng ý
+  const confirmReOrder = async () => {
+      setReorderModalOpen(false); // đóng modal
+      const orderId = orderToReorderId;
+
+      try {
+          const res = await fetch(`${API_ORDER}/${orderId}`);
+          if (!res.ok) throw new Error("Không lấy được thông tin đơn hàng");
+          
+          const orderData = await res.json();
+          const oldTickets = orderData.tickets;
+
+          if (!oldTickets || oldTickets.length === 0) {
+              showNotification("Đơn hàng này không còn vé để mua lại.", "error");
+              return;
+          }
+
+          // kiểm tra từng vé xem còn trống không
+          const itemsToAdd = [];
+          const unavailableSeats = [];
+          
+          for (const ticket of oldTickets) {
+              const occupiedRes = await fetch(`${API_BASE}/tickets/occupied/${ticket.match_config_id}`);
+              if (occupiedRes.ok) {
+                  const occupiedSeats = await occupiedRes.json(); 
+                  
+                  if (occupiedSeats.includes(ticket.seat_number)) {
+                      unavailableSeats.push(`${ticket.seat_number} - ${ticket.ticket_type_name}`);
+                  } else {
+                      itemsToAdd.push({
+                          id: `${ticket.match_config_id}-${ticket.seat_number}`, 
+                          matchId: ticket.match_id,
+                          matchName: `${ticket.home_team} vs ${ticket.away_team}`,
+                          matchTime: ticket.start_time,
+                          stadium: ticket.stadium_name,
+                          image: ticket.banner_url || ticket.home_logo,
+                          configId: ticket.match_config_id,
+                          ticketName: ticket.ticket_type_name,
+                          zoneName: ticket.zone_name,
+                          price: Number(ticket.price),
+                          color: "#3B82F6", 
+                          seatNumber: ticket.seat_number
+                      });
+                  }
+              }
+          }
+
+          //xử lý kq
+          if (unavailableSeats.length > 0) {
+              // hiện modal cảnh báo ghế đã mất
+              setUnavailableSeatsModal({
+                  isOpen: true,
+                  seats: unavailableSeats,
+                  matchId: oldTickets[0].match_id 
+              });
+          } else {
+              // all ghế trống = Thêm vào giỏ = Chuyển trang
+              clearCart(); 
+              addToCart(itemsToAdd); 
+              navigate('/checkout'); 
+              setTimeout(() => showNotification("Đã thêm vé vào giỏ hàng! Vui lòng thanh toán ngay.", "info"), 100);
+          }
+
+      } catch (error) {
+          console.error(error);
+          showNotification("Có lỗi xảy ra khi kiểm tra vé. Vui lòng thử lại sau.", "error");
+      }
+  };
+  const filteredOrders = orders.filter(o => {
+      if (filter === 'ALL') return true;
+      return o.status === filter;
   });
-
-  const renderQrSection = (ticket) => {
-    if (ticket.status === 'VALID') {
-        return (
-            <div className="bg-white p-4 rounded-2xl shadow-xl flex justify-center">
-                <QRCode value={ticket.qrCode || ticket.id} size={140} />
-            </div>
-        );
-    } 
-    if (ticket.status === 'USED') {
-        return (
-            <div className="relative bg-gray-100 p-4 rounded-2xl border-2 border-gray-200 opacity-70 flex justify-center">
-                <QRCode value={ticket.id} size={140} fgColor="#9CA3AF"/>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="bg-green-100 p-2 rounded-full border-2 border-green-500 mb-1">
-                        <CheckCircle size={32} className="text-green-600"/>
-                    </div>
-                    <span className="font-black text-green-700 text-sm bg-white/90 px-2 py-1 rounded shadow-sm">ĐÃ SỬ DỤNG</span>
-                </div>
-            </div>
-        );
-    }
-    return (
-        <div className="bg-red-50 p-6 rounded-2xl border-2 border-red-100 flex flex-col items-center justify-center w-[172px] h-[172px]">
-            <Ban size={48} className="text-red-500 mb-2"/>
-            <span className="font-bold text-red-600 text-lg">ĐÃ HỦY</span>
-        </div>
-    );
+  const getStatusBadge = (status) => {
+      switch (status) {
+          case 'PAID': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">Đã thanh toán</span>;
+          case 'PENDING': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">Chờ thanh toán</span>;
+          case 'SHIPPING': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">Đang giao</span>;
+          case 'DELIVERED': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">Đã giao</span>;
+          case 'CANCELLED': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">Đã hủy</span>;
+          default: return status;
+      }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[500px] flex flex-col">
-      
-      {/* Header & Filter */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[600px] flex flex-col relative">
+      {notification && (
+        <div className={`fixed top-24 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-white animate-in slide-in-from-top-5 duration-300 ${notification.type === 'success' ? 'bg-green-600' : notification.type === 'info' ? 'bg-blue-600' : 'bg-red-600'}`}>
+            {notification.type === 'success' ? <CheckCircle size={20}/> : <AlertTriangle size={20}/>}
+            <span className="font-medium">{notification.message}</span>
+        </div>
+      )}
+
       <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><Ticket className="text-blue-600"/> Vé của tôi</h2>
-        <div className="flex gap-2">
-            <button onClick={() => setFilter("VALID")} className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${filter === 'VALID' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Sắp diễn ra</button>
-            <button onClick={() => setFilter("USED")} className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${filter === 'USED' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Đã sử dụng</button>
-            <button onClick={() => setFilter("INVALID")} className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${filter === 'INVALID' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>Đã hủy</button>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Clock className="text-blue-600"/> Lịch sử mua vé
+            </h2>
+            <button 
+                onClick={() => navigate('/')} 
+                className="text-gray-500 hover:text-blue-600 flex items-center gap-1 text-sm font-medium transition-colors">
+                <ArrowLeft size={18}/> Về trang chủ
+            </button>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-2">
+            {['ALL', 'PENDING', 'PAID', 'CANCELLED'].map(st => (
+                <button 
+                    key={st}
+                    onClick={() => setFilter(st)} 
+                    className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${filter === st ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                    {st === 'ALL' ? 'Tất cả' : st === 'PENDING' ? 'Chờ thanh toán' : st === 'PAID' ? 'Đã thanh toán' : 'Đã hủy'}
+                </button>
+            ))}
         </div>
       </div>
 
-      {/* List */}
+      {/* ds order*/}
       <div className="p-6 flex-1">
         {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="animate-spin text-blue-600"/></div>
-        ) : filteredTickets.length > 0 ? (
+        ) : filteredOrders.length > 0 ? (
             <div className="space-y-4">
-                {filteredTickets.map((ticket) => (
-                    <div key={ticket.id} className="group border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row items-center gap-4 hover:border-blue-400 hover:shadow-md transition-all bg-white cursor-pointer" onClick={() => setSelectedTicket(ticket)}>
-                        <img src={ticket.image || "https://via.placeholder.com/100?text=Ticket"} alt="Match" className="w-16 h-16 rounded-lg object-contain bg-gray-50 p-1 grayscale group-hover:grayscale-0 transition"/>
-                        
-                        <div className="flex-1 w-full text-center md:text-left">
-                            <h3 className="font-bold text-lg text-gray-900">{ticket.match}</h3>
-                            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-1 text-sm text-gray-600">
-                                <span className="flex items-center gap-1"><Calendar size={14}/> {ticket.date}</span>
-                                <span className="flex items-center gap-1"><Clock size={14}/> {ticket.time}</span>
-                                <span className="flex items-center gap-1"><MapPin size={14}/> {ticket.stadium}</span>
+                {filteredOrders.map((order) => (
+                    <div key={order.id} className="border border-gray-200 rounded-xl p-5 hover:border-blue-300 transition-all bg-white">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                            <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <span className="font-mono font-bold text-lg text-gray-800">{order.id}</span>
+                                    {getStatusBadge(order.status)}
+                                </div>
+                                <p className="text-sm text-gray-500 flex items-center gap-2">
+                                    <Calendar size={14}/> {new Date(order.created_at).toLocaleString('vi-VN')}
+                                    <span className="text-gray-300">|</span>
+                                    {order.payment_method === 'COD' ? <Truck size={14}/> : <CreditCard size={14}/>} {order.payment_method === 'COD' ? 'Thanh toán khi nhận' : 'Chuyển khoản'}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-500">Tổng tiền</p>
+                                <p className="text-xl font-black text-red-600">{Number(order.total_amount).toLocaleString()}đ</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="text-right hidden md:block">
-                                <p className="text-xs text-gray-500">{ticket.zone}</p>
-                                <p className="font-bold text-blue-600 text-lg">{ticket.seat}</p>
+                        {/* ghi chú cho tt */}
+                        {order.status === 'PENDING' && (
+                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded-lg flex items-start gap-3 text-sm text-yellow-800">
+                                <AlertCircle size={16} className="mt-0.5 shrink-0"/>
+                                <div>
+                                    <p className="font-bold">Đơn hàng đang chờ xử lý</p>
+                                    <p className="text-xs mt-1 text-yellow-700">
+                                        {order.payment_method === 'COD' 
+                                            ? "Chúng tôi sẽ sớm liên hệ để xác nhận giao vé. Vui lòng chú ý điện thoại." 
+                                            : "Vui lòng hoàn tất thanh toán để hệ thống xuất vé."}
+                                    </p>
+                                </div>
                             </div>
-                            <button className="px-5 py-2.5 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-600 hover:text-white transition flex items-center gap-2">
-                                <QrCode size={18}/> <span className="hidden md:inline">Chi tiết</span>
+                        )}
+                        
+                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+                            {/* nút mua lại chỉ hiện khi đã hủy*/}
+                            {order.status === 'CANCELLED' && (
+                                <button 
+                                    // GỌI HÀM MỚI ĐỂ MỞ MODAL
+                                    onClick={() => handleReOrderClick(order.id)}
+                                    className="px-4 py-2 border border-blue-200 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition flex items-center gap-2">
+                                    <RefreshCcw size={16}/> Mua lại
+                                </button>
+                            )}
+
+                            {(order.status === 'PENDING') && (
+                                <button 
+                                    onClick={() => openCancelModal(order)}
+                                    className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition">
+                                    Hủy đơn hàng
+                                </button>
+                            )}
+
+                            <button 
+                                onClick={() => setSelectedOrderId(order.id)}
+                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition flex items-center gap-2">
+                                Xem chi tiết <ChevronRight size={16}/>
                             </button>
                         </div>
                     </div>
                 ))}
             </div>
         ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 py-12 border-2 border-dashed border-gray-100 rounded-xl">
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 py-20 border-2 border-dashed border-gray-100 rounded-xl">
                 <Ticket size={48} className="mb-4 opacity-20"/>
-                <p>Không tìm thấy vé nào trong mục này.</p>
-                <p className="text-xs mt-2">(Kiểm tra lại tab trạng thái khác xem)</p>
+                <p>Chưa có đơn hàng nào trong mục này.</p>
             </div>
         )}
       </div>
 
-      {/* --- MODAL CHI TIẾT VÉ --- */}
-      {selectedTicket && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn" onClick={() => setSelectedTicket(null)}>
-            <div className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setSelectedTicket(null)} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-1 rounded-full transition z-10"><X size={20}/></button>
-                
-                <div className={`p-6 text-center text-white pt-10 pb-12 relative overflow-hidden ${selectedTicket.status === 'INVALID' ? 'bg-gray-600' : 'bg-gradient-to-br from-blue-600 to-blue-900'}`}>
-                    <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                    <h3 className="font-bold text-xl relative z-10">{selectedTicket.match}</h3>
-                    <p className="opacity-90 text-sm mt-1 relative z-10">{selectedTicket.stadium}</p>
+      {/* Modal Hủy */}
+      {cancelModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
+              <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                  <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">Lý do hủy đơn hàng</h3>
+                      <button onClick={() => setCancelModalOpen(false)}><X size={20} className="text-gray-400 hover:text-black"/></button>
+                  </div>
+                  
+                  <div className="space-y-3 mb-4">
+                      {CANCEL_REASONS.map((reason) => (
+                          <label key={reason} className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all ${cancelReason === reason ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                              <input 
+                                  type="radio" ame="cancelReason" 
+                                  className="w-4 h-4 text-red-600 accent-red-600"
+                                  checked={cancelReason === reason} onChange={() => setCancelReason(reason)}/>
+                              <span className="ml-3 text-sm font-medium">{reason}</span>
+                          </label>
+                      ))}
+                  </div>
+
+                  {cancelReason === "Khác" && (
+                      <textarea 
+                          className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none mb-4"
+                          rows="3"placeholder="Nhập lý do chi tiết..."
+                          value={otherReason} onChange={(e) => setOtherReason(e.target.value)}></textarea>
+                  )}
+                  <div className="flex gap-3">
+                      <button onClick={() => setCancelModalOpen(false)} className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Đóng</button>
+                      <button onClick={submitCancelOrder} className="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700">Xác nhận hủy</button>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* modal cảnh báo ghế đã bán */}
+      {unavailableSeatsModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+                <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertTriangle size={32}/>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Rất tiếc!</h3>
+                <p className="text-gray-600 mb-4 text-sm">Các ghế sau đây đã bị người khác mua mất:</p>
+                <div className="bg-gray-50 rounded-xl p-3 mb-6 max-h-40 overflow-y-auto text-left border border-gray-200">
+                    <ul className="space-y-1 text-sm font-medium text-gray-700">
+                        {unavailableSeatsModal.seats.map((s, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                                <span className="w-2 h-2 bg-red-500 rounded-full"></span> {s}
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
-                <div className="bg-white px-6 pb-8 -mt-6 rounded-t-3xl relative z-20">
-                    <div className="flex justify-center -mt-10 mb-4">
-                        {renderQrSection(selectedTicket)}
-                    </div>
-                    
-                    <div className="text-center mb-6">
-                        <p className="text-xs text-gray-400 uppercase tracking-wider">Mã vé</p>
-                        <p className="text-xl font-mono font-black text-gray-800 tracking-widest truncate px-4">{selectedTicket.id.slice(0, 8).toUpperCase()}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-y-4 text-sm">
-                        <div><p className="text-gray-400 text-xs">Ngày</p><p className="font-bold text-gray-900">{selectedTicket.date}</p></div>
-                        <div className="text-right"><p className="text-gray-400 text-xs">Giờ</p><p className="font-bold text-gray-900">{selectedTicket.time}</p></div>
-                        <div><p className="text-gray-400 text-xs">Khu vực</p><p className="font-bold text-gray-900 truncate pr-2">{selectedTicket.zone}</p></div>
-                        <div className="text-right"><p className="text-gray-400 text-xs">Ghế</p><p className="font-bold text-blue-600 text-lg">{selectedTicket.seat}</p></div>
-                    </div>
-
-                    {selectedTicket.status === 'VALID' && (
-                        <button className="w-full mt-8 py-3.5 bg-gray-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-black shadow-lg transition-all">
-                            <Download size={20}/> Tải vé về máy
-                        </button>
-                    )}
+                <div className="flex gap-3">
+                    <button 
+                        onClick={() => setUnavailableSeatsModal({ ...unavailableSeatsModal, isOpen: false })} 
+                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Đóng
+                    </button>
+                    <button 
+                        onClick={() => navigate(`/matches/${unavailableSeatsModal.matchId}`)} 
+                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">
+                        Chọn lại ghế khác
+                    </button>
                 </div>
             </div>
         </div>
       )}
+
+      {/* xác nhận mua lại */}
+      {reorderModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
+            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <RefreshCcw size={32}/>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Mua lại</h3>
+                <p className="text-gray-600 mb-6 text-sm">
+                    Bạn có chắc chắn muốn đặt lại các vé trong đơn hàng này không? Giỏ hàng hiện tại (nếu có) sẽ bị thay thế.
+                </p>
+                <div className="flex gap-3 justify-center">
+                    <button 
+                        onClick={() => setReorderModalOpen(false)} 
+                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200"> Hủy
+                    </button>
+                    <button 
+                        onClick={confirmReOrder} 
+                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg"> Đồng ý
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
+      {selectedOrderId && (<OrderDetailModal orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />)}
+
     </div>
   );
 }

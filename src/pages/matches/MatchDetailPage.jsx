@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { 
-  MapPin, Calendar, Clock, ChevronLeft, ZoomIn, ZoomOut, RotateCcw, 
-  ShoppingCart, Info, Check, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, 
-  AlertCircle, X, Loader2, Filter, Ticket
-} from "lucide-react";
+import { MapPin, Calendar, Clock, ChevronLeft, ZoomIn, ZoomOut, RotateCcw, ShoppingCart, Info, Check, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, AlertCircle, X, Loader2, Filter, Ticket } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 import { useCart } from "../../context/CartContext.jsx";
-import CommentSection from "../../components/user/CommentsSection.jsx"; 
+import CommentSection from "../../components/support_user/CommentsSection.jsx"; 
 
-// API URL
+// api url db
 const API_BASE = "http://localhost:5000/api";
 
 export default function MatchDetailPage() {
@@ -17,7 +13,7 @@ export default function MatchDetailPage() {
   const navigate = useNavigate();
   const { cartItems, addToCart, removeFromCart } = useCart();
 
-  // --- STATE ---
+  // state
   const [match, setMatch] = useState(null);             
   const [ticketConfigs, setTicketConfigs] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +22,7 @@ export default function MatchDetailPage() {
   const [viewMode, setViewMode] = useState("stadium"); 
   const [selectedConfig, setSelectedConfig] = useState(null); 
   
-  // State lưu các ghế đã bán
+  //trạng thái lưu các ghế đã bán
   const [occupiedSeats, setOccupiedSeats] = useState([]); 
   const [isLoadingSeats, setIsLoadingSeats] = useState(false);
 
@@ -35,7 +31,7 @@ export default function MatchDetailPage() {
   
   const [zoneFilter, setZoneFilter] = useState(null); 
 
-  // --- 1. FETCH DATA ---
+  // gọi db
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -49,7 +45,6 @@ export default function MatchDetailPage() {
 
         const matchData = await resMatch.json();
         setMatch(matchData);
-
         if (resConfigs.ok) {
             const configsData = await resConfigs.json();
             const mappedConfigs = configsData.map(c => {
@@ -67,7 +62,6 @@ export default function MatchDetailPage() {
                 } else if (zName.includes("KHÁN ĐÀI D")) {
                     group = "D";
                 }
-
                 return {
                     id: c.id,                    
                     name: c.type_name,           
@@ -92,7 +86,7 @@ export default function MatchDetailPage() {
     fetchData();
   }, [id]);
 
-  // --- 2. FETCH GHẾ ĐÃ BÁN ---
+  // db ghế đã bán
   useEffect(() => {
       const fetchOccupiedSeats = async () => {
           if (!selectedConfig) return;
@@ -114,8 +108,11 @@ export default function MatchDetailPage() {
       fetchOccupiedSeats();
   }, [selectedConfig]); 
 
-  // --- DỮ LIỆU VISUAL (GIỮ NGUYÊN) ---
-  const zones = [
+  // check trạng thái bán
+  const isMatchSelling = match?.status === 'SELLING';
+
+  //dl khu trong sân
+const zones = [
     { id: "A-T2-1", name: "A - Tầng 2", group: "A-T2", style: { top: "5%", left: "25%", width: "50%", height: "8%", bg: "bg-blue-600" } },
     { id: "A-VIP", name: "A - VIP/Platinum", group: "A-VIP", style: { top: "15%", left: "35%", width: "30%", height: "6%", bg: "bg-yellow-500" } },
     { id: "A-T1-L", name: "A - Tầng 1", group: "A-T1", style: { top: "15%", left: "15%", width: "18%", height: "8%", bg: "bg-orange-500" } },
@@ -126,7 +123,6 @@ export default function MatchDetailPage() {
     { id: "D-Stand", name: "Khán đài D & E", group: "D", style: { top: "30%", right: "5%", width: "8%", height: "40%", bg: "bg-purple-500" } }, 
   ];
 
-  // --- HANDLERS ---
   const getRowLabel = (index) => {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     return index < 26 ? alphabet[index] : alphabet[index % 26] + (Math.floor(index/26));
@@ -137,21 +133,18 @@ export default function MatchDetailPage() {
     setSelectedConfig(null); 
     setViewMode("stadium"); 
   };
-
   const handleClearFilter = () => {
     setZoneFilter(null);
     setSelectedConfig(null);
   };
-
   const handleConfigClick = (config) => {
     setSelectedConfig(config);
     setViewMode("zone");
     setZoomLevel(1);
   };
-
   const handleBackToStadium = () => setViewMode("stadium");
-  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 2.0));
-  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.6));
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 3.0)); 
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
   const handleResetZoom = () => setZoomLevel(1);
 
   const formatDate = (isoString) => {
@@ -162,6 +155,8 @@ export default function MatchDetailPage() {
   };
 
   const handleSeatClick = (seatLabel) => {
+    // check trận nếu kp trận đang bán thì chặn k cho đặt hay xem vé
+    if (!isMatchSelling) return;
     if (!selectedConfig) return;
     const seatId = `${selectedConfig.id}-${seatLabel}`;
     const isSelected = cartItems.find((s) => s.id === seatId);
@@ -179,7 +174,7 @@ export default function MatchDetailPage() {
             matchName: `${match.home_team} vs ${match.away_team}`,
             matchTime: match.start_time,
             stadium: match.stadium_name,
-            image: match.home_logo,       
+            image: match.banner_url || match.home_logo,       
             configId: selectedConfig.id, 
             ticketName: selectedConfig.name,
             zoneName: selectedConfig.zoneName,
@@ -190,42 +185,75 @@ export default function MatchDetailPage() {
     }
   };
 
+  // render kiểu lưới ghế
   const renderSeats = () => {
     if (!selectedConfig) return null;
-    const SEATS_PER_ROW = 10;
-    const displayCount = Math.min(selectedConfig.quantity, 200); 
+    const totalQuantity = selectedConfig.quantity;
 
-    return Array.from({ length: displayCount }).map((_, idx) => {
-        const rowIndex = Math.floor(idx / SEATS_PER_ROW); 
-        const colIndex = (idx % SEATS_PER_ROW) + 1;       
-        const rowLabel = getRowLabel(rowIndex);
-        const seatLabel = `${rowLabel}${colIndex}`;
-        const seatId = `${selectedConfig.id}-${seatLabel}`;
-        
-        const isSold = occupiedSeats.includes(seatLabel);
-        const isSelected = cartItems.find(s => s.id === seatId);
-        
-        return (
-            <button
-                key={seatId}
-                disabled={isSold}
-                onClick={() => handleSeatClick(seatLabel)}
-                className={`
-                    w-10 h-10 rounded-lg text-xs font-bold flex items-center justify-center transition-all border
-                    ${isSold 
-                        ? "bg-red-500 text-white cursor-not-allowed border-red-600 opacity-50" // ĐÃ BÁN: MÀU ĐỎ
-                        : isSelected 
-                            ? "text-white shadow-lg scale-110 border-transparent ring-2 ring-offset-1 ring-blue-400" 
-                            : "bg-white text-gray-600 hover:border-blue-500 hover:text-blue-600 border-gray-300 shadow-sm"
-                    }
-                `}
-                style={isSelected && !isSold ? {backgroundColor: selectedConfig.color} : {}}
-                title={isSold ? "Đã bán" : `Ghế ${seatLabel}`}
-            >
-                {isSold ? <X size={14}/> : seatLabel}
-            </button>
-        );
-    });
+    // cấu hình hiển thị điều chỉnh ghế dựa trên sl vé
+    let seatsPerRow = 10;
+    let seatSizeClass = "w-10 h-10 text-xs"; 
+    let gapClass = "gap-3";
+
+    if (totalQuantity > 1000) {
+        seatsPerRow = 25;
+        seatSizeClass = "w-5 h-5 text-[8px]";
+        gapClass = "gap-1";
+    } else if (totalQuantity > 500) {
+        seatsPerRow = 20;
+        seatSizeClass = "w-7 h-7 text-[10px]";
+        gapClass = "gap-1.5";
+    } else if (totalQuantity > 200) {
+        seatsPerRow = 15;
+        seatSizeClass = "w-8 h-8 text-[11px]";
+        gapClass = "gap-2";
+    }
+    const displayCount = totalQuantity; 
+
+    return (
+        <div 
+            className={`grid ${gapClass} p-4 bg-white border border-gray-200 rounded-xl shadow-sm inline-grid`}
+            style={{ 
+                gridTemplateColumns: `repeat(${seatsPerRow}, minmax(0, 1fr))` 
+            }}>
+            {Array.from({ length: displayCount }).map((_, idx) => {
+                const rowIndex = Math.floor(idx / seatsPerRow); 
+                const colIndex = (idx % seatsPerRow) + 1;       
+                const rowLabel = getRowLabel(rowIndex);
+                const seatLabel = `${rowLabel}${colIndex}`;
+                const seatId = `${selectedConfig.id}-${seatLabel}`;
+                
+                const isSold = occupiedSeats.includes(seatLabel);
+                const isSelected = cartItems.find(s => s.id === seatId);
+                
+                // CHECK: ngắt ghế nếu trận đấu không bán hoặc ghế đã bán
+                const isDisabled = isSold || !isMatchSelling;
+
+                return (
+                    <button
+                        key={seatId}
+                        disabled={isDisabled}
+                        onClick={() => handleSeatClick(seatLabel)}
+                        className={`
+                            ${seatSizeClass}
+                            rounded-md font-bold flex items-center justify-center transition-all border
+                            ${isSold 
+                                ? "bg-red-500 text-white cursor-not-allowed border-red-600 opacity-80" 
+                                : !isMatchSelling 
+                                    ? "bg-gray-100 text-gray-300 cursor-not-allowed border-gray-200" // kiểu cho ghế chưa mở bán hoặc hết vé
+                                    : isSelected 
+                                        ? "text-white shadow-lg scale-110 border-transparent ring-2 ring-offset-1 ring-blue-400" 
+                                        : "bg-white text-gray-600 hover:border-blue-500 hover:text-blue-600 border-gray-300 shadow-sm"
+                            }
+                        `}
+                        style={isSelected && !isSold && isMatchSelling ? {backgroundColor: selectedConfig.color} : {}}
+                        title={isSold ? "Đã bán" : !isMatchSelling ? "Tạm khóa" : `Ghế ${seatLabel}`} >
+                        {isSold ? <X size={10}/> : seatLabel}
+                    </button>
+                );
+            })}
+        </div>
+    );
   };
 
   const displayedConfigs = zoneFilter ? ticketConfigs.filter(c => c.zoneGroup === zoneFilter) : ticketConfigs;
@@ -254,9 +282,17 @@ export default function MatchDetailPage() {
                 <div className="flex items-center gap-6">
                     <Link to="/matches" className="p-2 hover:bg-gray-100 rounded-full transition"><ChevronLeft/></Link>
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            {match.home_team} <span className="text-gray-400">vs</span> {match.away_team}
-                        </h2>
+                        <div className="flex items-center gap-3">
+                             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                {match.home_team} <span className="text-gray-400">vs</span> {match.away_team}
+                            </h2>
+                            {/* trạng thái trận đấu */}
+                            {!isMatchSelling && (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-300">
+                                    {match.status === 'SOLD_OUT' ? 'HẾT VÉ' : match.status === 'ENDED' ? 'KẾT THÚC' : 'SẮP MỞ BÁN'}
+                                </span>
+                            )}
+                        </div>
                         <div className="flex gap-4 text-sm text-gray-500 mt-1">
                             <span className="flex items-center gap-1"><MapPin size={14}/> {match.stadium_name}</span>
                             <span className="flex items-center gap-1"><Calendar size={14}/> {formatDate(match.start_time)}</span>
@@ -268,7 +304,6 @@ export default function MatchDetailPage() {
 
         <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col lg:flex-row gap-6 h-[80vh]">
-                
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative flex flex-col">
                     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 bg-white p-1.5 rounded-lg shadow-lg border border-gray-200">
                         <button onClick={handleZoomIn} className="p-2 hover:bg-gray-100 rounded-md text-gray-700"><ZoomIn size={20}/></button>
@@ -291,8 +326,8 @@ export default function MatchDetailPage() {
                         )}
                     </div>
 
-                    <div className="flex-1 bg-gray-50 relative overflow-hidden flex items-center justify-center p-4 select-none">
-                        <div style={{ transform: `scale(${zoomLevel})`, transition: "transform 0.3s ease" }} className="w-full h-full flex items-center justify-center relative">
+                    <div className="flex-1 bg-gray-50 relative overflow-auto flex items-center justify-center p-4 select-none">
+                        <div style={{ transform: `scale(${zoomLevel})`, transition: "transform 0.3s ease", transformOrigin: "center top" }} className="min-w-full min-h-full flex items-center justify-center relative">
                             {viewMode === "stadium" && (
                                 <div className="relative w-[800px] h-[500px]">
                                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[55%] h-[40%] bg-green-600 rounded-[30px] border-4 border-white flex items-center justify-center shadow-xl z-0">
@@ -312,20 +347,29 @@ export default function MatchDetailPage() {
 
                             {viewMode === "zone" && (
                                 <div className="flex flex-col items-center justify-center w-full h-full">
+                                    
+                                    {/* tb khi không mở bán */}
+                                    {!isMatchSelling && (
+                                        <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-xl flex flex-col items-center text-gray-500 animate-in fade-in zoom-in shadow-sm">
+                                            <AlertCircle size={32} className="mb-2"/>
+                                            <h3 className="font-bold text-lg">
+                                                {match.status === 'SOLD_OUT' ? 'Đã hết vé!' : match.status === 'ENDED' ? 'Trận đấu đã kết thúc' : 'Chưa mở bán vé'}
+                                            </h3>
+                                            <p className="text-sm">Bạn không thể chọn ghế vào lúc này.</p>
+                                        </div>
+                                    )}
+
                                     {isLoadingSeats ? (
                                         <div className="flex items-center gap-2 text-gray-500"><Loader2 className="animate-spin"/> Đang tải trạng thái ghế...</div>
                                     ) : (
                                         <>
-                                            {/* CHÚ THÍCH TRẠNG THÁI GHẾ (ĐÃ CẬP NHẬT MÀU ĐỎ) */}
+                                            {/* chú thích */}
                                             <div className="flex gap-4 mb-4 text-xs font-medium bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
                                                 <div className="flex items-center gap-2"><div className="w-4 h-4 border border-gray-300 rounded bg-white"></div> Trống</div>
                                                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-500 rounded text-white flex items-center justify-center"><X size={12}/></div> Đã bán</div>
                                                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded" style={{backgroundColor: selectedConfig?.color}}></div> Đang chọn</div>
                                             </div>
-
-                                            <div className="grid gap-3 p-6 bg-white border border-gray-200 rounded-xl shadow-sm inline-grid" style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}>
-                                                {renderSeats()}
-                                            </div>
+                                            {renderSeats()}
                                             
                                             <div className="mt-4 text-center text-sm text-gray-500">
                                                 <div className="w-[60%] h-8 bg-gray-100 rounded-full mx-auto flex items-center justify-center text-xs text-gray-400 font-bold shadow-inner mb-2">HƯỚNG SÂN</div>

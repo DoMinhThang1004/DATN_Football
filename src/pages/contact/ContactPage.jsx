@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { MapPin, Phone, Mail, Send, Facebook, Instagram, Youtube, AlertCircle, Check } from "lucide-react";
-import { Link } from "react-router-dom"; // Thêm import Link
+import { Link } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 
 export default function ContactPage() {
@@ -9,26 +9,26 @@ export default function ContactPage() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+      const { name, value } = e.target;
+      setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = () => {
-    let newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Vui lòng nhập họ và tên.";
-    if (!formData.email.trim()) newErrors.email = "Vui lòng nhập email.";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ.";
-    if (!formData.phone.trim()) newErrors.phone = "Vui lòng nhập số điện thoại.";
-    if (!formData.message.trim()) newErrors.message = "Vui lòng nhập nội dung.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+      let newErrors = {};
+      if (!formData.name.trim()) newErrors.name = "Vui lòng nhập họ và tên.";
+      if (!formData.email.trim()) newErrors.email = "Vui lòng nhập email.";
+      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email không hợp lệ.";
+      if (!formData.phone.trim()) newErrors.phone = "Vui lòng nhập số điện thoại.";
+      if (!formData.message.trim()) newErrors.message = "Vui lòng nhập nội dung.";
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) setShowSuccess(true);
-  };
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (validateForm()) setShowSuccess(true);
+    };
 
   const handleClosePopup = () => {
     setShowSuccess(false);
@@ -43,7 +43,6 @@ export default function ContactPage() {
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Liên hệ với chúng tôi</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">Chúng tôi luôn sẵn sàng lắng nghe bạn.</p>
             
-            {/* --- ĐOẠN THÊM MỚI --- */}
             <p className="text-gray-500 mt-2 text-sm">
                 Bạn có thắc mắc? Hãy thử xem qua trang{" "}
                 <Link to="/faq" className="text-blue-600 font-bold hover:underline">Câu hỏi thường gặp (FAQ)</Link>
@@ -51,11 +50,9 @@ export default function ContactPage() {
                 <Link to="/policy" className="text-blue-600 font-bold hover:underline">Chính sách</Link>
                 {" "}trước khi gửi tin nhắn nhé!
             </p>
-            {/* ------------------- */}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Thông tin liên hệ */}
             <div className="bg-blue-900 text-white p-8 rounded-2xl shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-bl-full"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-500 opacity-20 rounded-tr-full"></div>
@@ -78,7 +75,6 @@ export default function ContactPage() {
                 </div>
             </div>
 
-            {/* Form */}
             <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">Gửi tin nhắn</h3>
                 <form onSubmit={handleSubmit} className="space-y-6">
