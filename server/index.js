@@ -10,7 +10,7 @@ const initSocketHandler = require('./socket');
 // cấu hình 
 const allowedOrigins = process.env.CORS_ORIGIN ? 
     process.env.CORS_ORIGIN.split(',') : 
-    ["http://localhost:5173"]; // Mặc định là localhost nếu không tìm thấy biến
+    ["http://localhost:5173"]; // auto là localhost nếu không tìm thấy biến
 
 const app = express();
 const server = http.createServer(app);
@@ -18,7 +18,7 @@ const server = http.createServer(app);
 // khởi tạo socket.io với cors
 const io = new Server(server, { 
     cors: {
-        origin: allowedOrigins, // Sử dụng biến môi trường
+        origin: allowedOrigins, // sử dụng biến môi trường
         methods: ["GET", "POST"],
         credentials: true
     }
