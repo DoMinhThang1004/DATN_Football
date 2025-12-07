@@ -9,7 +9,7 @@ import ManageTickets from '../admin/ManageTickets.jsx';
 import MatchTicketConfig from '../admin/MatchTicketConfig.jsx';
 import ManageComments from '../admin/ManageComments.jsx';
 import ManageNews from '../admin/ManageNews.jsx';
-import AdminLiveChat from '../admin/adminLiveChat.jsx';
+import AdminLiveChat from '../admin/AdminLiveChat.jsx';
 
 
 import HomePage from '../pages/home/Home.jsx';
