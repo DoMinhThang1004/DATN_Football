@@ -5,51 +5,66 @@ const path = require('path');
 const multer = require('multer');
 const http = require('http');
 const { Server } = require('socket.io');
-const initSocketHandler = require('./socket'); // handler 
+const initSocketHandler = require('./socket');
 
-// khởi tạo serverhttp và socket.io
+// cấu hình 
+const allowedOrigins = [
+    "http://localhost:5173", // link lap
+    "https://datn-football-8hfodqrrd-do-minh-thangs-projects.vercel.app", //vercel
+    "https://football-ticket.vercel.app" // dự phòng
+];
+
 const app = express();
-const server = http.createServer(app); //tạo server HTTP
-const io = new Server(server, { //tạo server socket.io
+const server = http.createServer(app); // tạo server HTTP
+
+// khởi tạo socket.io với cors 
+const io = new Server(server, { 
     cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"]
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
+// khởi tạo logic socket
 initSocketHandler(io); 
 
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// cấu hình xxpress cors chuẩn
+app.use(cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
+
 app.use(express.json());
 
-//úp
+//up ảnh công khai
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// kt lỗi
+// log để debug
 app.use((req, res, next) => {
     console.log(`📩 [REQUEST] ${req.method} ${req.originalUrl}`);
     next();
 });
 
-// Import routes
-const controllers = require('./routes/dashboardRoutes');//trang tổng quan
-const stadiumRoutes = require('./routes/stadiumRoutes');//sân vận động
-const matchRoutes = require('./routes/matchRoutes');//trận đấu
-const ticketTypeRoutes = require('./routes/ticketTypeRoutes');//loại vé
-const matchTConfigRoutes = require('./routes/matchTConfigRoutes');//cấu hình trận đấu
-const userRoutes = require('./routes/userRoutes');//người dùng
-const addressRoutes = require('./routes/addressRoutes');//địa chỉ
-const ticketRoutes = require('./routes/ticketRoutes');//vé
-const orderRoutes = require('./routes/oderRoutes');//đơn hàng
-const commentRoutes = require('./routes/conmentRoutes');//bình luận
-const paymentRoutes = require('./routes/paymentRoutes');//thanh toán onl
-const faqRoutes = require('./routes/faqRoutes');//faq
-const newsRoutes = require('./routes/newsRoutes');//tin tức
+//import routes
+const controllers = require('./routes/dashboardRoutes');
+const stadiumRoutes = require('./routes/stadiumRoutes');
+const matchRoutes = require('./routes/matchRoutes');
+const ticketTypeRoutes = require('./routes/ticketTypeRoutes');
+const matchTConfigRoutes = require('./routes/matchTConfigRoutes');
+const userRoutes = require('./routes/userRoutes');
+const addressRoutes = require('./routes/addressRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
+const orderRoutes = require('./routes/oderRoutes');
+const commentRoutes = require('./routes/conmentRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const faqRoutes = require('./routes/faqRoutes');
+const newsRoutes = require('./routes/newsRoutes');
 
-
-// úp ảnh
+//cấu hình úp ảnh
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => {
@@ -58,13 +73,18 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
+
+// api upload
 app.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).send('Chưa chọn file nào!');
-    const imageUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+    //dùng host động từ request
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const imageUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
     res.json({ url: imageUrl });
 });
 
-// Sử dụng routes
+//sử dụng routes
 app.use('/api/dashboard', controllers);
 app.use('/api/stadiums', stadiumRoutes);
 app.use('/api/matches', matchRoutes);
@@ -79,13 +99,11 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/news', newsRoutes);
 
-
 app.get('/', (req, res) => {
     res.send('Backend Football Ticket is running! (Socket.io enabled)');
 });
 
-
-// chạy server.listen thay vì app.listen
+// chạy server
 server.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
 });
