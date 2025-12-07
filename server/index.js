@@ -8,19 +8,17 @@ const { Server } = require('socket.io');
 const initSocketHandler = require('./socket');
 
 // cấu hình 
-const allowedOrigins = [
-    "http://localhost:5173", // link lap
-    "https://datn-football-8hfodqrrd-do-minh-thangs-projects.vercel.app", //vercel
-    "https://football-ticket.vercel.app" // dự phòng
-];
+const allowedOrigins = process.env.CORS_ORIGIN ? 
+    process.env.CORS_ORIGIN.split(',') : 
+    ["http://localhost:5173"]; // Mặc định là localhost nếu không tìm thấy biến
 
 const app = express();
-const server = http.createServer(app); // tạo server HTTP
+const server = http.createServer(app);
 
-// khởi tạo socket.io với cors 
+// khởi tạo socket.io với cors
 const io = new Server(server, { 
     cors: {
-        origin: allowedOrigins,
+        origin: allowedOrigins, // Sử dụng biến môi trường
         methods: ["GET", "POST"],
         credentials: true
     }
