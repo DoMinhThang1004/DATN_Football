@@ -3,11 +3,15 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle, AlertCircle, Loader2 
 import { Link, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 
-// api url 
-const LOGIN_API = "http://localhost:5000/api/users/login";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// url ảnh
-const BANNER_IMG = "http://localhost:5000/uploads/banner-1.jpg";
+// api đăng nhập
+const LOGIN_API = `${API_BASE}/api/users/login`;
+
+// url ản
+const BANNER_IMG = `${API_BASE}/uploads/banner-1.jpg`;
+
+
 export default function LoginPage() {
   const navigate = useNavigate();
   

@@ -4,7 +4,10 @@ import UserLayout from "../../layouts/UserLayout.jsx";
 import { Calendar, MapPin, ArrowRight, Loader2, Ticket, Flame, Zap, Trophy, Medal, Globe, ChevronLeft, ChevronRight, TrendingUp, Tag } from "lucide-react";
 
 // api url db
-const API_URL = "http://localhost:5000/api/matches";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// api url
+const API_URL = `${API_BASE}/api/matches`;
 
 // ds giải đấu nổi bật
 const FEATURED_LEAGUES = [
@@ -15,10 +18,11 @@ const FEATURED_LEAGUES = [
     { name: "Giao Hữu", icon: <Zap size={32} />, color: "from-purple-500 to-pink-500", desc: "Giao lưu quốc tế" },
 ];
 
+//banner img
 const BANNER_IMAGES = [
-    "http://localhost:5000/uploads/1764953369361-934511660.jpg",
-    "http://localhost:5000/uploads/banner-2.jpg",
-    "http://localhost:5000/uploads/banner-3.jpg",
+    `${API_BASE}/uploads/1764953369361-934511660.jpg`,
+    `${API_BASE}/uploads/banner-2.jpg`,
+    `${API_BASE}/uploads/banner-3.jpg`,
 ];
 
 export default function Home() {

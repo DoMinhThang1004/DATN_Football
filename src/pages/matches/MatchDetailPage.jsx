@@ -6,7 +6,8 @@ import { useCart } from "../../context/CartContext.jsx";
 import CommentSection from "../../components/support_user/CommentsSection.jsx"; 
 
 // api url db
-const API_BASE = "http://localhost:5000/api";
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`
 
 export default function MatchDetailPage() {
   const { id } = useParams();

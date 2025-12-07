@@ -7,7 +7,9 @@ import {
   Loader2, CheckCircle, AlertTriangle, PieChart 
 } from "lucide-react";
 
-const API_BASE = "http://localhost:5000/api";
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`;
+
 
 export default function MatchTicketConfig() {
   //state trạgn thái

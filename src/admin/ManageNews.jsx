@@ -3,7 +3,8 @@ import { Plus, Edit, Trash2, Globe, Clock, Loader2, X, AlertTriangle, FileText, 
 import { formatDate } from 'date-fns';
 import AdminLayout from '../layouts/AdminLayout';
 
-const API_NEWS = "http://localhost:5000/api/news";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_NEWS = `${API_BASE}/api/news`;
 
 // tiện ích chữ đậm cho admin
 const formatPreviewContent = (text) => {

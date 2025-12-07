@@ -3,11 +3,14 @@ import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, CheckCircl
 import { Link, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 
-//api url db
-const REGISTER_API = "http://localhost:5000/api/users/register";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-//url ảnh
-const BANNER_IMG = "http://localhost:5000/uploads/banner-2.jpg";
+// api đk
+const REGISTER_API = `${API_BASE}/api/users/register`;
+
+// url ảnh
+const BANNER_IMG = `${API_BASE}/uploads/banner-2.jpg`;
+
 export default function RegisterPage() {
   const navigate = useNavigate();
 

@@ -4,7 +4,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Clock, User, ArrowLeft, Loader2, Globe, CalendarDays, ChevronRight } from 'lucide-react';
 import UserLayout from "../../layouts/UserLayout.jsx";
 
-const API_NEWS = "http://localhost:5000/api/news";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_NEWS = `${API_BASE}/api/news`;
 
 // hàm xử lý ký tự xuống dòng \n
 const formatContent = (text) => {

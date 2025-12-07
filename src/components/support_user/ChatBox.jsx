@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, X, Headset, User, Zap, ChevronsRight, Headphones } from 'lucide-react';
 import io from 'socket.io-client';
 
-const SOCKET_SERVER_URL = 'http://localhost:5000'; 
+const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000'; 
 let socket;
+
 
 const ChatBox = ({ 
     userFullName = "Quý Khách", 

@@ -7,7 +7,8 @@ import {
   MoreVertical, Ban, ExternalLink, Star
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/comments";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/comments`;
 
 export default function ManageComments() {
   const [comments, setComments] = useState([]);

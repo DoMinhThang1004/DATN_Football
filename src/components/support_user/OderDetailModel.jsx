@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { X, MapPin, Clock, Calendar, QrCode, Download, CheckCircle, Ticket } from "lucide-react";
 import QRCode from "react-qr-code";
 
-const API_BASE = "http://localhost:5000/api";
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`;
 
 export default function OrderDetailModal({ orderId, onClose }) {
   const [orderDetail, setOrderDetail] = useState(null);

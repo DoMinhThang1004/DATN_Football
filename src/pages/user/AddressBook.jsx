@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, Plus, Edit2, Trash2, Save, X, Home, Briefcase, AlertTriangle, AlertCircle, Loader2 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/addresses";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/addresses`;
 
 export default function AddressBook() {
   // state dl

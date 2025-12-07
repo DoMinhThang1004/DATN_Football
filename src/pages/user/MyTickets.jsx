@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx"; 
 import OrderDetailModal from "../../components//support_user/OderDetailModel.jsx"; 
 
-const API_BASE = "http://localhost:5000/api";
-const API_ORDER = `${API_BASE}/orders`;
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`; // api
+const API_ORDER = `${API_HOST}/api/orders`;
+
 
 const CANCEL_REASONS = [
     "Thay đổi kế hoạch cá nhân",

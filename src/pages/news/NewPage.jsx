@@ -4,7 +4,8 @@ import UserLayout from "../../layouts/UserLayout.jsx";
 import { Link } from "react-router-dom";
 
 // api url
-const API_NEWS = "http://localhost:5000/api/news"; 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_NEWS = `${API_BASE}/api/news`;
 
 export default function NewsPage() {
     const [searchQuery, setSearchQuery] = useState("");

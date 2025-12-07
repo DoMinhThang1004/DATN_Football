@@ -6,7 +6,8 @@ import {
 import { Link, useSearchParams } from "react-router-dom"; 
 import UserLayout from "../../layouts/UserLayout.jsx";
 
-const API_MATCHES = "http://localhost:5000/api/matches";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_MATCHES = `${API_BASE}/api/matches`;
 
 // Component con: Nút X (Dùng Lucide X thay vì SVG tự vẽ)
 const CloseIcon = ({size}) => <X size={size} />; 

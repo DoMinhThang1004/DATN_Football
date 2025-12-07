@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Send, User, MessageSquare, Star, CheckCircle, AlertTriangle, CornerUpLeft, Loader2, ThumbsUp } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
-const API_BASE = "http://localhost:5000/api";
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`;
 
 export default function CommentSection({ matchId }) {
   const navigate = useNavigate();

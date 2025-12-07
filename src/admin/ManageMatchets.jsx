@@ -3,9 +3,11 @@ import AdminLayout from "../layouts/AdminLayout.jsx";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Filter, Calendar, MapPin, Edit, Trash2, Ticket, X, Save, Loader2, AlertTriangle, CheckCircle, UploadCloud, Image as ImageIcon,ChevronLeft, ChevronRight, Trophy} from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/matches";
-const STADIUM_API_URL = "http://localhost:5000/api/stadiums";
-const UPLOAD_URL = "http://localhost:5000/api/upload";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/matches`;
+const STADIUM_API_URL = `${API_BASE}/api/stadiums`;
+const UPLOAD_URL = `${API_BASE}/api/upload`;
 
 //ds giải đấu phổ biến
 const LEAGUES = ["Cúp Quốc Gia (V-League1)", "AFF Cup (ASEAN Cup)", "SEA Games", 

@@ -5,7 +5,8 @@ import InvoiceModal from "../../components/support_user/CheckoutOnlDetail.jsx";
 import UserLayout from "../../layouts/UserLayout.jsx"; 
 import emailjs from '@emailjs/browser';
 
-const API_BASE = "http://localhost:5000/api";
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`;
 
 // cấu hình emailjs
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;

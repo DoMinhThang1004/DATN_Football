@@ -4,8 +4,8 @@ import io from 'socket.io-client';
 import AdminLayout from '../layouts/AdminLayout';
 
 
-const SOCKET_SERVER_URL = 'http://localhost:5000'; 
-const socket = io(SOCKET_SERVER_URL); 
+const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const socket = io(SOCKET_SERVER_URL);
 
 const ADMIN_ID = 100; 
 

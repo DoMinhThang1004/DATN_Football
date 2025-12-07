@@ -8,7 +8,8 @@ import {
 import { useNavigate } from "react-router-dom"; 
 import UserLayout from "../../layouts/UserLayout.jsx";
 
-const API_FAQ = "http://localhost:5000/api/faqs"; 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_FAQ = `${API_BASE}/api/faqs`;
 
 const formatAnswer = (text) => {
     if (!text) return null;

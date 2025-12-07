@@ -5,8 +5,9 @@ import {
   AlertTriangle, CheckCircle, Filter, Lock, Shield, User, UploadCloud, RefreshCcw 
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api/users";
-const UPLOAD_URL = "http://localhost:5000/api/upload";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/users`;
+const UPLOAD_URL = `${API_BASE}/api/upload`;
 
 export default function ManageUsers() {
   // State quản lý

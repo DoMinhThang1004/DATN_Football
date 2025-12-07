@@ -4,8 +4,10 @@ import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import UserLayout from "./UserLayout.jsx"; 
 
 // api url
-const API_BASE = "http://localhost:5000/api";
-const UPLOAD_URL = "http://localhost:5000/api/upload";
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_HOST}/api`;
+const UPLOAD_URL = `${API_HOST}/api/upload`;
+
 
 export default function ProfileLayout() {
   const location = useLocation();

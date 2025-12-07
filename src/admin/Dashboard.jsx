@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Users, DollarSign, Ticket, Activity, TrendingUp, TrendingDown, MoreHorizontal, Calendar as CalendarIcon, ChevronDown, Loader2, ChevronLeft, ChevronRight} from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar} from 'recharts';
 
-
-
-const API_URL = "http://localhost:5000/api/dashboard/stats";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/dashboard/stats`;
 
 //card thống kê
 const StatCard = ({ title, value, icon: Icon, color, bgColor, trend, isPositive, onClick }) => (

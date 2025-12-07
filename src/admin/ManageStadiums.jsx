@@ -4,8 +4,10 @@ import {
 } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout.jsx";
 // api url
-const API_URL = "http://localhost:5000/api/stadiums";
-const UPLOAD_URL = "http://localhost:5000/api/upload"; 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/stadiums`;
+const UPLOAD_URL = `${API_BASE}/api/upload`;
+
 
 export default function ManageStadiums() {
   //trạng thái

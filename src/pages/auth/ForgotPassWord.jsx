@@ -9,7 +9,8 @@ const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-const RESET_API_DIRECT = "http://localhost:5000/api/users/reset-password-direct";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const RESET_API_DIRECT = `${API_BASE}/api/users/reset-password-direct`;
 
 export default function ForgotPassword() {
   const navigate = useNavigate();

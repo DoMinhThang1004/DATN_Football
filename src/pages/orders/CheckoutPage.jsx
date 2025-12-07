@@ -7,15 +7,17 @@ import CheckoutSteps from "../../components/support_user/CheckoutSteps.jsx";
 import InvoiceModal from "../../components/support_user/CheckoutOnlDetail.jsx";
 import QRCode from "react-qr-code";
 
-// api url
-const API_BASE = "http://localhost:5000/api";
-const API_PAYMENT_VNPAY = "http://localhost:5000/api/payment/create_payment_url";
-const API_PAYMENT_MOMO = "http://localhost:5000/api/payment/create_momo_url"; 
+// lấy link BE từ biến môi trường
+const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-//golo thanh toán onl
+// api url (host)
+const API_BASE = `${API_HOST}/api`;
+const API_PAYMENT_VNPAY = `${API_HOST}/api/payment/create_payment_url`;
+const API_PAYMENT_MOMO = `${API_HOST}/api/payment/create_momo_url`; 
+
+// url logo
 const VNPAY_LOGO = "https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg";
 const MOMO_LOGO = "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png";
-
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();

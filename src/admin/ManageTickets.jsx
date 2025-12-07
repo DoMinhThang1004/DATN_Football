@@ -5,7 +5,8 @@ import {
 } from "lucide-react";
 
 // api
-const API_URL = "http://localhost:5000/api/ticket-types";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/ticket-types`;
 
 export default function ManageTickets() {
   // state quản lý

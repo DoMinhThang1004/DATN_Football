@@ -3,7 +3,8 @@ import { Save, Edit3, User, Phone, Mail, CheckCircle, AlertCircle, X, Key, Loade
 import { useNavigate } from "react-router-dom";
 
 //api url
-const API_URL = "http://localhost:5000/api/users";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE}/api/users`;
 
 export default function UserProfile() {
   const navigate = useNavigate();
