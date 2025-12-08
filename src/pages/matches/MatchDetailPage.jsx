@@ -227,7 +227,7 @@ const zones = [
                 const isSold = occupiedSeats.includes(seatLabel);
                 const isSelected = cartItems.find(s => s.id === seatId);
                 
-                // CHECK: ngắt ghế nếu trận đấu không bán hoặc ghế đã bán
+                // kiểm tra ngắt ghế nếu trận đấu không bán hoặc ghế đã bán
                 const isDisabled = isSold || !isMatchSelling;
 
                 return (

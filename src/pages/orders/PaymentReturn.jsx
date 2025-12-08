@@ -8,135 +8,127 @@ import emailjs from '@emailjs/browser';
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_BASE = `${API_HOST}/api`;
 
-// cấu hình emailjs
+//cấu hình emailjs
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const TICKET_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TICKET_TEMPLATE_ID; 
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY; 
 
 export default function PaymentReturn() {
-  const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState("loading"); 
-  const [orderResult, setOrderResult] = useState(null);
-  
-  // chặn ngăn gọi API 2 lần
-  const isRunRef = useRef(false);
+const [searchParams] = useSearchParams();
+const [status, setStatus] = useState("loading"); 
+const [orderResult, setOrderResult] = useState(null);
 
-  useEffect(() => {
+ // chặn ngăn gọi API 2 lần
+const isRunRef = useRef(false);
+
+    useEffect(() => {
     const verifyPayment = async () => {
-      // nếu chạy tt r thì return
-      if (isRunRef.current === true) return;
-      isRunRef.current = true; //dánh dấu đã chạy
+    // nếu chạy tt r thì return
+    if (isRunRef.current === true) return;
+    isRunRef.current = true; //dánh dấu đã chạy
 
-      try {
-        const queryString = searchParams.toString();
+        try {
+    const queryString = searchParams.toString();
         let apiUrl = "";
-        
-        if (searchParams.has('vnp_SecureHash')) {
+            if (searchParams.has('vnp_SecureHash')) {
             apiUrl = `${API_BASE}/payment/vnpay_return?${queryString}`;
-        } else if (searchParams.has('signature')) {
+            } else if (searchParams.has('signature')) {
             apiUrl = `${API_BASE}/payment/momo_return?${queryString}`;
-        } else {
-            setStatus("failed");
-            return;
-        }
-
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-
-        // chấp nhận code "00" hoặc nếu backend báo đã xác nhận trước đó
-        if (data.code === "00" || data.message?.includes("đã thành công") || data.message?.includes("confirmed")) { 
-            
-            const orderId = data.orderId || searchParams.get('vnp_TxnRef');
-            
-            // ;ấy chi tiết đơn hàng
-            const orderRes = await fetch(`${API_BASE}/orders/${orderId}`);
-            if (orderRes.ok) {
-                const orderData = await orderRes.json();
-                
-                // logic gửi vé về email
-                try {
-                    const firstTicket = orderData.tickets[0];
-
-                    //xử lý thời gian 
-                    const rawDate = firstTicket?.start_time || new Date();
-                    const dateObj = new Date(rawDate);
-                    //format: 00:00 - 00/00/2025
-                    const timeString = `${dateObj.getHours()}:${String(dateObj.getMinutes()).padStart(2, '0')} - ${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
-
-                    // xử lý tên trận = home_team và away_team
-                    const home = firstTicket?.home_team || "Đội nhà";
-                    const away = firstTicket?.away_team || "Đội khách";
-                    const finalMatchName = firstTicket?.match_name || `${home} vs ${away}`;
-
-                    //ds ghế
-                    const seatList = orderData.tickets
-                        .map(t => `${t.zone_name} - Ghế ${t.seat_number}`)
-                        .join('<br/>');
-
-                    // link qr code (dùng oder ID)
-                    const qrContent = orderData.id;
-                    const qrCodeUrl = `https://quickchart.io/qr?text=${qrContent}&size=300`;
-
-                    const templateParams = {
-                        to_name: orderData.full_name,
-                        email: orderData.email,
-                        
-                        match_name: finalMatchName, // tên trận đầy đủ
-                        time_show: timeString,      // thời gian đã format
-                        
-                        ticket_id: "Đơn: " + orderData.id,
-                        seat_info: seatList,
-                        stadium: firstTicket?.stadium_name || "Sân vận động Thống Nhất",
-                        qr_link: qrCodeUrl
-                    };
-
-                    // gửi email không await tránh chặn giao diện
-                    emailjs.send(SERVICE_ID, TICKET_TEMPLATE_ID, templateParams, PUBLIC_KEY)
-                        .catch((err) => console.error("Lỗi gửi mail:", err));
-                    
-                } catch (emailErr) {
-                    console.error("Lỗi logic email:", emailErr);
-                }
-
-                // fdormat dữ liệu hiển thị hóa đơn
-                const formattedResult = {
-                    orderId: orderData.id,
-                    totalAmount: Number(orderData.total_amount),
-                    paymentMethod: orderData.payment_method === 'MOMO' ? 'Ví MoMo' : 'VNPAY', 
-                    deliveryMethod: "eticket", 
-                    user: {
-                        full_name: orderData.full_name,
-                        email: orderData.email,
-                        phone: orderData.phone
-                    },
-                    items: orderData.tickets.map(t => ({
-                        ticketName: t.ticket_type_name, 
-                        zoneName: t.zone_name,          
-                        seatNumber: t.seat_number,      
-                        price: Number(t.price)          
-                    })),
-                    shippingAddress: null 
-                };
-
-                setOrderResult(formattedResult);
-                setStatus("success");
             } else {
-                setStatus("success_no_data");
-            }
-        } else {
-            setStatus("failed");
+        setStatus("failed");
+        return;
         }
 
-      } catch (error) {
-        console.error(error);
-        setStatus("failed");
-      }
-    };
+    const res = await fetch(apiUrl);
+        //kiểm tra http status trc khi chạy
+            if (!res.ok) { 
+                //dừng và báo lỗi
+    const errorData = await res.json().catch(() => ({ message: "Lỗi không xác định từ Server." }));
+                throw new Error(`Giao dịch thất bại: ${errorData.message || res.statusText}`);
+            }
 
-    if (searchParams.toString()) {
-        verifyPayment();
+    const data = await res.json(); 
+    // chạy trạng thái 
+            if (data.code === "00" || data.message?.includes("đã thành công") || data.message?.includes("confirmed")) { 
+    
+    const orderId = data.orderId || searchParams.get('vnp_TxnRef');
+    let successfulOrderLoad = false;
+    
+    // --- BẮT ĐẦU: KHỐI TẢI CHI TIẾT ĐƠN HÀNG (CẦN CÔ LẬP) ---
+    try {
+        const orderRes = await fetch(`${API_BASE}/orders/${orderId}`);
+        
+        if (orderRes.ok) {
+            const orderData = await orderRes.json();
+            
+            // logoc gửi vé về mail
+            try {
+                // all thông tin
+                const firstTicket = orderData.tickets[0];
+                const rawDate = firstTicket?.start_time || new Date();
+                const dateObj = new Date(rawDate);
+                const timeString = `${dateObj.getHours()}:${String(dateObj.getMinutes()).padStart(2, '0')} - ${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+                const home = firstTicket?.home_team || "Đội nhà";
+                const away = firstTicket?.away_team || "Đội khách";
+                const finalMatchName = firstTicket?.match_name || `${home} vs ${away}`;
+                const seatList = orderData.tickets.map(t => `${t.zone_name} - Ghế ${t.seat_number}`).join('<br/>');
+                const qrContent = orderData.id;
+                const qrCodeUrl = `https://quickchart.io/qr?text=${qrContent}&size=300`;
+
+                const templateParams = {
+                    to_name: orderData.full_name, email: orderData.email, match_name: finalMatchName, time_show: timeString, 
+                    ticket_id: "Đơn: " + orderData.id, seat_info: seatList, stadium: firstTicket?.stadium_name || "Sân vận động Thống Nhất", qr_link: qrCodeUrl
+                };
+                emailjs.send(SERVICE_ID, TICKET_TEMPLATE_ID, templateParams, PUBLIC_KEY).catch((err) => console.error("Lỗi gửi mail:", err));
+            } catch (emailErr) {
+                console.error("Lỗi logic email:", emailErr);
+            }
+
+            // fdormat dữ liệu hiển thị hóa đơn (giữ nguyên)
+            const formattedResult = {
+                orderId: orderData.id, totalAmount: Number(orderData.total_amount),
+                paymentMethod: orderData.payment_method === 'MOMO' ? 'Ví MoMo' : 'VNPAY', deliveryMethod: "eticket", 
+                user: { full_name: orderData.full_name, email: orderData.email, phone: orderData.phone },
+                items: orderData.tickets.map(t => ({
+                    ticketName: t.ticket_type_name, zoneName: t.zone_name, seatNumber: t.seat_number, price: Number(t.price)
+                })),
+                shippingAddress: null
+            };
+            
+            setOrderResult(formattedResult);
+            successfulOrderLoad = true; // Đánh dấu thành công
+            
+        } else {
+            // lỗi  http từ api hay đơn hàng
+            console.error("Lỗi HTTP khi tải chi tiết đơn hàng:", orderRes.status);
+            // successfulOrderLoad vẫn là false
+        }
+    } catch (orderError) {
+        // lỗi mạng hay json khi tải chi tiết đơn hàng
+        console.error("Lỗi mạng/JSON khi tải chi tiết đơn hàng:", orderError);
+        // successfulOrderLoad vẫn là false
     }
-  }, [searchParams]);
+    
+    // status hiển thị
+    if (successfulOrderLoad) {
+        setStatus("success"); // hiển thị chi tiết vé
+    } else {
+        setStatus("success_no_data"); // chạy lên thành công nhưng không tải được chi tiết
+    }
+
+    } else {
+        // k chạy nx vì đã xử lý lỗi (lỗi trả về từ Backend)
+        setStatus("failed");
+    }          
+        } catch (error) {
+            console.error("Lỗi xác thực giao dịch:", error);
+            setStatus("failed"); // // hiển thị giao dịch thất bại
+        }
+    };
+        if (searchParams.toString()) {
+        verifyPayment();
+        }
+          }, [searchParams]);
 
   return (
     <UserLayout>
@@ -166,9 +158,6 @@ export default function PaymentReturn() {
                      <InvoiceModal orderResult={orderResult} />
                      
                      <div className="text-center mt-8">
-                        <Link to="/" className="text-gray-500 hover:text-blue-600 text-sm font-medium underline">
-                            Quay về trang chủ
-                        </Link>
                     </div>
                 </div>
             )}

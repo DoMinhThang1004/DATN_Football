@@ -159,7 +159,7 @@ const deleteUserPermanently = async (req, res) => {
         
         if (orderIds.length > 0) {
             await client.query('DELETE FROM tickets WHERE order_id = ANY($1)', [orderIds]);
-            await client.query('DELETE FROM order_items WHERE order_id = ANY($1)', [orderIds]);
+            //await client.query('DELETE FROM order_items WHERE order_id = ANY($1)', [orderIds]);
             await client.query('DELETE FROM orders WHERE user_id = $1', [id]);
         }
 

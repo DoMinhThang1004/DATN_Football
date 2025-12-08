@@ -108,7 +108,8 @@ const paymentService = {
                 return { code: "00", message: "Giao dịch đã thành công trước đó", orderId };
             }
 
-            if (vnp_Params['vnp_ResponseCode'] === '00') {
+            if (vnp_Params['vnp_ResponseCode'] === '00' && vnp_Params['vnp_TransactionStatus'] === '00') {
+                // cập nhật paid khi vnpay và momo ==00
                 // cập nhật đơn hàng
                 await pool.query("UPDATE orders SET status = 'PAID', payment_method = 'VNPAY' WHERE id = $1", [orderId]);
                 
@@ -125,6 +126,7 @@ const paymentService = {
 
                 return { code: "00", message: "Giao dịch thành công", orderId };
             } else {
+                // nếu có bất kỳ trạng thái nào khác
                 await pool.query("UPDATE orders SET status = 'PENDING' WHERE id = $1", [orderId]);
                 return { code: "97", message: "Giao dịch thất bại" };
             }
@@ -152,35 +154,34 @@ const paymentService = {
     },
 
     verifyMomoReturn: async ({ resultCode, orderId, transId, amount }) => { 
-        const orderCheck = await pool.query("SELECT * FROM orders WHERE id = $1", [orderId]);
-        if (orderCheck.rows.length === 0) return { code: "99", message: "Không tìm thấy đơn hàng" };
+    const orderCheck = await pool.query("SELECT * FROM orders WHERE id = $1", [orderId]);
+    if (orderCheck.rows.length === 0) return { code: "99", message: "Không tìm thấy đơn hàng" };
+    
+    const currentOrder = orderCheck.rows[0];
+    
+    //kiểm tra tb từ momo
+    if (resultCode != '0') {
+        //cập nhật trạng thái thành PENDING 
+        await pool.query("UPDATE orders SET status = 'PENDING' WHERE id = $1", [orderId]);
         
-        const currentOrder = orderCheck.rows[0];
-        if (currentOrder.status === 'PAID') return { code: "00", message: "Giao dịch đã thành công trước đó", orderId };
-
-        if (resultCode == '0') {
-             // cập nhật đơn hàng
-             await pool.query("UPDATE orders SET status = 'PAID', payment_method = 'MOMO' WHERE id = $1", [orderId]);
-             
-             // thêm vào bảng thanh toán nếu chưa có
-             if (transId) {
-                const paymentCheck = await pool.query("SELECT id FROM payments WHERE transaction_code = $1", [transId]);
-                if (paymentCheck.rows.length === 0) {
-                    await pool.query(
-                        `INSERT INTO payments (
-                            order_id, payment_method, transaction_code, amount, status, paid_at
-                        ) VALUES ($1, $2, $3, $4, $5, NOW())`,
-                        [orderId, 'momo', transId, amount || currentOrder.total_amount, 'success']
-                    );
-                }
-             }
-
-             return { code: "00", message: "Giao dịch thành công", orderId };
-        } else {
-            await pool.query("UPDATE orders SET status = 'PENDING' WHERE id = $1", [orderId]);
-            return { code: "99", message: "Giao dịch thất bại hoặc bị hủy" };
-        }
+        // trả về lỗi 99 để controller biết là thất bại và trả về
+        return { code: "99", message: "Giao dịch thất bại hoặc bị hủy" }; 
     }
+    
+    //xử lý trạng thái đã PAID 
+    if (currentOrder.status === 'PAID') { 
+         //đơn hàng được xử lý thành công trước đó
+         return { code: "00", message: "Giao dịch đã thành công trước đó", orderId };
+    }
+    //xử lý giao dịch thành công
+    if (resultCode == '0') {
+        // thành công thì PAID
+        await pool.query("UPDATE orders SET status = 'PAID', payment_method = 'MOMO' WHERE id = $1", [orderId]);
+        return { code: "00", message: "Giao dịch thành công", orderId };
+    }
+    
+    //nếu tới đây mà k đc thì lỗi mặc định
+    return { code: "99", message: "Lỗi xử lý trạng thái." };
+}
 };
-
 module.exports = paymentService;

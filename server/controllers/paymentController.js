@@ -53,9 +53,15 @@ const createMomoPaymentUrl = async (req, res) => {
 const momoReturn = async (req, res) => {
     try {
         const result = await paymentService.verifyMomoReturn(req.query);
-        res.json(result);
+        if (result.code === "00") {
+            return res.json(result); 
+        } else {
+            // thất bại hay hủy thì trẻ về  tttp stasus 400
+            return res.status(400).json(result); 
+        }
     } catch (error) {
-        res.status(500).json({ code: "99", message: "Lỗi Server" });
+        console.error("Lỗi SERVER MOMO RETURN:", error);
+        return res.status(500).json({ code: "500", message: "Lỗi Server Nội Bộ" });
     }
 };
 
