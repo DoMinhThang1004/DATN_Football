@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Save, Edit3, User, Phone, Mail, CheckCircle, AlertCircle, X, Key, Loader2, AlertTriangle, Eye, EyeOff, Trash2, Info, Calendar, Shield, Hash, Activity, Cake } from "lucide-react";
+import { 
+  Save, Edit3, User, Phone, Mail, CheckCircle, AlertCircle, 
+  X, Key, Loader2, AlertTriangle, Eye, EyeOff, Trash2, Info,
+  Calendar, Shield, Hash, Activity, Cake 
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000"; 
 const API_URL = `${API_BASE}/api/users`;
 
 export default function UserProfile() {
@@ -21,7 +25,6 @@ export default function UserProfile() {
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [notification, setNotification] = useState(null);
   
-  // xóa tài khoản
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const showNotification = (message, type = "success") => {
@@ -29,17 +32,24 @@ export default function UserProfile() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  //(yyyy-mm--dd)
   const formatDateForInput = (isoString) => {
       if (!isoString) return "";
       const date = new Date(isoString);
       return date.toISOString().split('T')[0];
   };
 
-  //ngày hiển thị 
   const formatDateDisplay = (isoString) => {
       if (!isoString) return "Chưa cập nhật";
       return new Date(isoString).toLocaleDateString('vi-VN');
+  };
+
+  // token thêm mới
+  const getAuthHeaders = () => {
+      const token = localStorage.getItem("token");
+      return {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+      };
   };
 
   useEffect(() => {
@@ -47,37 +57,31 @@ export default function UserProfile() {
         setIsLoading(true);
         try {
             const storedUserStr = localStorage.getItem("currentUser");
-            if (!storedUserStr) return;
-            
-            const storedUser = JSON.parse(storedUserStr);
-            const res = await fetch(`${API_URL}`); 
-            const data = await res.json();
-            const myUser = data.find(u => String(u.id) === String(storedUser.id));
-
-            if (myUser) {
-                setCurrentUser(myUser);
-                setFormData({
-                    full_name: myUser.full_name || "",
-                    email: myUser.email || "",
-                    phone: myUser.phone || "",
-                    gender: myUser.gender || "Nam", 
-                    birth_date: formatDateForInput(myUser.birth_date), 
-                    password: "",
-                    confirmPassword: ""
-                });
-            } else {
-                setCurrentUser(storedUser);
+            if (!storedUserStr) {
+                navigate("/login");
+                return;
             }
+            const storedUser = JSON.parse(storedUserStr);
+            setCurrentUser(storedUser);
+            setFormData({
+                full_name: storedUser.full_name || "",
+                email: storedUser.email || "",
+                phone: storedUser.phone || "",
+                gender: storedUser.gender || "Nam", 
+                birth_date: formatDateForInput(storedUser.birth_date), 
+                password: "",
+                confirmPassword: ""
+            });
+
         } catch (error) {
             console.error("Lỗi tải thông tin:", error);
-            showNotification("Không thể tải thông tin mới nhất", "error");
+            showNotification("Lỗi dữ liệu", "error");
         } finally {
             setIsLoading(false);
         }
     };
-
     fetchUserData();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (activeTab === 'edit' && currentUser) {
@@ -92,17 +96,19 @@ export default function UserProfile() {
         }));
     }
   }, [activeTab, currentUser]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // câp nhật dl
+  //cập nhật gửi token
   const handleSave = async (e) => {
     e.preventDefault();
 
     if (!formData.full_name.trim() || !formData.phone.trim()) {
         showNotification("Vui lòng không để trống thông tin!", "error"); return;
     }
+
     let payload = {
         full_name: formData.full_name,
         email: formData.email,
@@ -119,12 +125,19 @@ export default function UserProfile() {
        if (formData.password !== formData.confirmPassword) { showNotification("Mật khẩu không khớp!", "error"); return; }
        payload.password = formData.password;
     }
+
     try {
         const res = await fetch(`${API_URL}/${currentUser.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
         });
+
+        if (res.status === 401 || res.status === 403) {
+            showNotification("Phiên đăng nhập hết hạn!", "error");
+            navigate("/login");
+            return;
+        }
 
         if (res.ok) {
             showNotification("Cập nhật hồ sơ thành công!");
@@ -133,7 +146,6 @@ export default function UserProfile() {
             setCurrentUser(userToStore);
             localStorage.setItem("currentUser", JSON.stringify(userToStore));
             window.dispatchEvent(new Event("storage")); 
-            
             setActiveTab("view");
         } else {
             showNotification("Lỗi khi cập nhật!", "error");
@@ -143,10 +155,13 @@ export default function UserProfile() {
     }
   };
 
-  // xóa tk
+  //xóa tk
   const handleDeleteAccount = async () => {
       try {
-          const res = await fetch(`${API_URL}/${currentUser.id}`, { method: 'DELETE' });
+          const res = await fetch(`${API_URL}/${currentUser.id}`, { 
+              method: 'DELETE',
+              headers: getAuthHeaders()
+          });
           
           if (res.ok) {
               setShowDeleteModal(false);
@@ -154,34 +169,33 @@ export default function UserProfile() {
               localStorage.removeItem("token");
               window.dispatchEvent(new Event("storage"));
               
-              // xóa tạm thời và tg đăng xuất
               showNotification("Tài khoản đã xóa tạm thời. Đang đăng xuất...", "success");
 
               setTimeout(() => {
                   navigate("/login");
-              }, 3000); //3s 
+              }, 3000);
               
           } else {
               showNotification("Lỗi khi xóa tài khoản", "error");
           }
       } catch (error) {
           showNotification("Lỗi kết nối!", "error");
-        }
-    };
+      }
+  };
 
-    const getStatusInfo = (status) => {
-        if (!status) return { text: "Không xác định", color: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
-        const s = status.toUpperCase(); 
-        if (s === 'ACTIVE') return { text: "Hoạt động", color: "bg-green-50 text-green-600 border-green-100", dot: "bg-green-500" };
-        if (s === 'BANNED') return { text: "Bị khóa", color: "bg-red-50 text-red-600 border-red-100", dot: "bg-red-500" };
-        if (s === 'DELETED') return { text: "Đã xóa", color: "bg-gray-100 text-gray-500 border-gray-200", dot: "bg-gray-400" };
-        return { text: status, color: "bg-blue-50 text-blue-600 border-blue-100", dot: "bg-blue-500" };
-    };
+  const getStatusInfo = (status) => {
+      if (!status) return { text: "Không xác định", color: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
+      const s = status.toUpperCase(); 
+      if (s === 'ACTIVE') return { text: "Hoạt động", color: "bg-green-50 text-green-600 border-green-100", dot: "bg-green-500" };
+      if (s === 'BANNED') return { text: "Bị khóa", color: "bg-red-50 text-red-600 border-red-100", dot: "bg-red-500" };
+      if (s === 'DELETED') return { text: "Đã xóa", color: "bg-gray-100 text-gray-500 border-gray-200", dot: "bg-gray-400" };
+      return { text: status, color: "bg-blue-50 text-blue-600 border-blue-100", dot: "bg-blue-500" };
+  };
 
-    if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" size={32}/></div>;
-    if (!currentUser) return <div className="text-center p-20 text-gray-500 text-sm">Không tìm thấy thông tin người dùng.</div>;
-    
-    const statusInfo = getStatusInfo(currentUser.status);
+  if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" size={32}/></div>;
+  if (!currentUser) return <div className="text-center p-20 text-gray-500 text-sm">Không tìm thấy thông tin người dùng.</div>;
+  
+  const statusInfo = getStatusInfo(currentUser.status);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative min-h-[500px] max-w-4xl mx-auto">
@@ -245,8 +259,8 @@ export default function UserProfile() {
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Info size={12}/> Giới tính</p>
                             <div className="flex items-center gap-2 text-gray-800 font-medium text-sm p-2.5 bg-gray-50/50 rounded-lg border border-gray-100">
-                                <span className={`inline-flex w-5 h-5 rounded-full ${formData.gender === 'Nam' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'} text-[10px] items-center justify-center font-bold`}>
-                                    {formData.gender === 'Nam' ? 'M' : formData.gender === 'Nữ' ? 'F' : 'O'}
+                                <span className={`inline-flex w-5 h-5 rounded-full ${currentUser.gender === 'Nam' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'} text-[10px] items-center justify-center font-bold`}>
+                                    {currentUser.gender === 'Nam' ? 'M' : currentUser.gender === 'Nữ' ? 'F' : 'O'}
                                 </span> 
                                 {currentUser.gender || "Chưa cập nhật"}
                             </div>
@@ -257,7 +271,6 @@ export default function UserProfile() {
                                 {formatDateDisplay(currentUser.birth_date)}
                             </div>
                         </div>
-
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Hash size={12}/> Mã thành viên</p>
                             <div className="text-gray-500 font-mono font-medium text-xs p-2.5 bg-gray-50/50 rounded-lg border border-gray-100">
@@ -268,15 +281,6 @@ export default function UserProfile() {
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Calendar size={12}/> Ngày tham gia</p>
                             <div className="text-gray-800 font-medium text-sm p-2.5 bg-gray-50/50 rounded-lg border border-gray-100">
                                 {currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString('vi-VN') : "N/A"}
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Activity size={12}/> Trạng thái</p>
-                            <div className="p-2.5 bg-gray-50/50 rounded-lg border border-gray-100">
-                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold border ${statusInfo.color}`}>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot}`}></div>
-                                    {statusInfo.text}
-                                </span>
                             </div>
                         </div>
                     </div>
@@ -295,22 +299,9 @@ export default function UserProfile() {
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold text-gray-600">Ngày sinh</label>
-                                <input 
-                                    type="date" 
-                                    name="birth_date" 
-                                    value={formData.birth_date} 
-                                    onChange={handleChange} 
-                                    className="w-full p-2.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"/>
+                                <input type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} className="w-full p-2.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"/>
                             </div>
-
-                            <div className="md:col-span-2 space-y-1.5">
-                                <label className="text-xs font-bold text-gray-600">Email</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16}/>
-                                    <input type="email" value={formData.email} disabled className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium" />
-                                </div>
-                            </div>
-                            <div className="md:col-span-2 space-y-1.5">
+                            <div className="md:col-span-1 space-y-1.5">
                                 <label className="text-xs font-bold text-gray-600">Giới tính</label>
                                 <div className="flex gap-4">
                                     {['Nam', 'Nữ', 'Khác'].map((g) => (
@@ -319,6 +310,13 @@ export default function UserProfile() {
                                             {g}
                                         </label>
                                     ))}
+                                </div>
+                            </div>
+                            <div className="md:col-span-2 space-y-1.5">
+                                <label className="text-xs font-bold text-gray-600">Email</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16}/>
+                                    <input type="email" value={formData.email} disabled className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium" />
                                 </div>
                             </div>
                         </div>
@@ -348,6 +346,7 @@ export default function UserProfile() {
                             <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition transform active:scale-95"><Save size={16}/> Lưu thay đổi</button>
                         </div>
                     </form>
+
                     <div className="mt-8 bg-red-50/50 rounded-xl p-5 border border-red-100 relative">
                         <h3 className="text-red-700 font-bold text-sm mb-1 flex items-center gap-2"><AlertCircle size={16}/> Xóa tài khoản</h3>
                         <p className="text-xs text-gray-500 mb-3 leading-relaxed">
@@ -364,14 +363,8 @@ export default function UserProfile() {
                             <div className="bg-white p-3 rounded-lg border border-red-200 shadow-sm inline-block animate-fadeIn">
                                 <p className="text-red-600 font-bold text-xs mb-2">Bạn có chắc chắn không?</p>
                                 <div className="flex gap-2">
-                                    <button 
-                                        onClick={() => setShowDeleteModal(false)}
-                                        className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200"> Hủy
-                                    </button>
-                                    <button 
-                                        onClick={handleDeleteAccount}
-                                        className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 shadow-sm"> Xác nhận
-                                    </button>
+                                    <button onClick={() => setShowDeleteModal(false)} className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded hover:bg-gray-200">Hủy</button>
+                                    <button onClick={handleDeleteAccount} className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 shadow-sm">Xác nhận</button>
                                 </div>
                             </div>
                         )}

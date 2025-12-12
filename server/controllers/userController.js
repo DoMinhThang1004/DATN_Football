@@ -1,10 +1,12 @@
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+require('dotenv').config(); 
 
 const SALT_ROUNDS = 10;
 
-//nodemailer
+//gửi mail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -13,7 +15,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// lấy ds user
+//lấy ds ng dùng
 const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY id ASC');
@@ -24,7 +26,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// tạo user mới
+//tạo
 const createUser = async (req, res) => {
   try {
     const { full_name, email, phone, password, role, status, avatar_url, gender, birth_date } = req.body;
@@ -34,9 +36,8 @@ const createUser = async (req, res) => {
       return res.status(400).json({ message: "Email này đã được sử dụng!" });
     }
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    //is
-    const newUser = await pool.query(
-      `INSERT INTO users (full_name, email, phone, password, role, status, avatar_url, gender, birth_date) 
+    
+    const newUser = await pool.query(`INSERT INTO users (full_name, email, phone, password, role, status, avatar_url, gender, birth_date) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [
           full_name, 
@@ -46,7 +47,7 @@ const createUser = async (req, res) => {
           role || 'USER', 
           status || 'ACTIVE', 
           avatar_url,
-          gender || 'Khác',  
+          gender || 'Khác',   
           birth_date || null 
       ]
     );
@@ -57,7 +58,7 @@ const createUser = async (req, res) => {
   }
 };
 
-// user login
+//đăng nhập
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -74,7 +75,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Sai mật khẩu!" });
     }
 
-    //khôi phục user đã xóa
+    //khôi phục, kiểm tra tthai
     if (storedUser.status === 'DELETED') {
          await pool.query("UPDATE users SET status = 'ACTIVE' WHERE id = $1", [storedUser.id]);
          console.log(`User ${storedUser.id} đã được khôi phục từ trạng thái DELETED.`);
@@ -85,8 +86,24 @@ const loginUser = async (req, res) => {
 
     const userInfo = user.rows[0];
     delete userInfo.password;
+
+    //tạo token
+    const token = jwt.sign(
+        { 
+            id: userInfo.id, 
+            role: userInfo.role,
+            email: userInfo.email 
+        },
+        process.env.JWT_SECRET, 
+        { expiresIn: '24h' }  
+    );
     
-    res.json({ message: "Đăng nhập thành công", user: userInfo });
+    //trả all user và token
+    res.json({ 
+        message: "Đăng nhập thành công", 
+        user: userInfo, 
+        token: token 
+    });
 
   } catch (err) {
     console.error(err.message);
@@ -94,7 +111,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-// cập nhật
+//cập nhật
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -102,17 +119,11 @@ const updateUser = async (req, res) => {
 
     if (password && password.trim() !== "") {
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-        await pool.query(
-            `UPDATE users 
-             SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, password = $7, gender = $8, birth_date = $9 
-             WHERE id = $10`,
+        await pool.query(`UPDATE users SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, password = $7, gender = $8, birth_date = $9 WHERE id = $10`,
             [full_name, email, phone, role, status, avatar_url, hashedPassword, gender, birth_date, id]
         );
     } else {
-        await pool.query(
-            `UPDATE users 
-             SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, gender = $7, birth_date = $8 
-             WHERE id = $9`,
+        await pool.query( `UPDATE users SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, gender = $7, birth_date = $8 WHERE id = $9`,
             [full_name, email, phone, role, status, avatar_url, gender, birth_date, id]
         );
     }
@@ -123,14 +134,21 @@ const updateUser = async (req, res) => {
   }
 };
 
-// xóa tạm thời, ad và kh muốn
+//xóa mềm
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     
-    //trạng thái thành xóa tạm thời
+    //lấy tt ngdung
+    const requesterId = req.user.id;
+    const requesterRole = req.user.role;
+
+    //đc xóa nếu check là admin hay chính tk
+    if (requesterRole !== 'ADMIN' && requesterId != id) {
+        return res.status(403).json({ message: "Bạn không có quyền xóa tài khoản của người khác!" });
+    }
+
     await pool.query("UPDATE users SET status = 'DELETED' WHERE id = $1", [id]);
-    
     res.json({ message: "Tài khoản đã được xóa tạm thời." });
   } catch (err) {
     console.error("Lỗi xóa User:", err.message);
@@ -142,74 +160,65 @@ const deleteUser = async (req, res) => {
   }
 };
 
-//xóa tk vĩnh viễn
+//xóa vien
 const deleteUserPermanently = async (req, res) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const { id } = req.params;
 
-        // xóa vé đơn hàng
+        //xóa vé vs đh
         const orders = await client.query('SELECT id FROM orders WHERE user_id = $1', [id]);
         const orderIds = orders.rows.map(o => o.id);
         
         if (orderIds.length > 0) {
             await client.query('DELETE FROM tickets WHERE order_id = ANY($1)', [orderIds]);
-            //await client.query('DELETE FROM order_items WHERE order_id = ANY($1)', [orderIds]);
             await client.query('DELETE FROM orders WHERE user_id = $1', [id]);
         }
-
-        // xóa địa chỉ user
         await client.query('DELETE FROM user_addresses WHERE user_id = $1', [id]);
-
-        // xóa cmt, báo cáo cmt
-        await client.query('DELETE FROM comment_reports WHERE user_id = $1', [id]);
+        //await client.query('DELETE FROM comment_reports WHERE user_id = $1', [id]);
         await client.query('DELETE FROM comments WHERE user_id = $1', [id]);
-
-        // xóa user
+        await client.query('DELETE FROM chat_history WHERE user_id = $1', [id]);
         await client.query('DELETE FROM users WHERE id = $1', [id]);
-
         await client.query('COMMIT');
-        res.json({ message: "Đã xóa VĨNH VIỄN người dùng và toàn bộ dữ liệu liên quan!" });
+        res.json({ message: "Đã xóa vĩnh viễn người dùng và toàn bộ dữ liệu liên quan!" });
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error("Lỗi Xóa Vĩnh Viễn:", err.message);
         res.status(500).json({ message: "Lỗi Server: " + err.message });
     } finally {
         client.release();
     }
 };
 
-// đổi mk trực tiếp gửi otp
-const resetPasswordDirect = async (req, res) => {
+//gửi otp
+const sendForgotPasswordOTP = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
-    
-    // check tồn tại tk k
+    const { email } = req.body;
     const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (user.rows.length === 0) {
-        return res.status(404).json({ message: "Email không tồn tại!" });
-    }
+    if (user.rows.length === 0) return res.status(404).json({ message: "Email không tồn tại!" });
 
-    // mã hóa mk
-    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); 
+    
+    await pool.query('UPDATE users SET reset_otp = $1, reset_otp_expiry = $2 WHERE email = $3', [otp, expiry, email]);
 
-    //vô db
-    await pool.query(
-        'UPDATE users SET password = $1 WHERE email = $2',
-        [hashedPassword, email]
-    );
+    const mailOptions = {
+      from: '"Football Ticket Support" <no-reply@footballticket.com>',
+      to: email,
+      subject: 'Mã xác nhận đặt lại mật khẩu',
+      text: `Mã OTP của bạn là: ${otp}`
+    };
 
-    res.json({ message: "Đổi mật khẩu thành công!" });
-
+    await transporter.sendMail(mailOptions);
+    res.json({ message: "Đã gửi mã OTP!" });
   } catch (err) {
-    console.error("Lỗi đổi mật khẩu:", err);
-    res.status(500).send('Lỗi Server');
+    console.error("Lỗi gửi mail:", err);
+    res.status(500).send('Lỗi gửi email: ' + err.message);
   }
 };
 
-//đổi mk với otp
+//đổi mk otp
 const resetPasswordWithOTP = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
@@ -232,8 +241,34 @@ const resetPasswordWithOTP = async (req, res) => {
   }
 };
 
+//đổi mk tt
+const resetPasswordDirect = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    //check tk có k
+    const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (user.rows.length === 0) {
+        return res.status(404).json({ message: "Email không tồn tại!" });
+    }
+
+    //mã hóa
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await pool.query(
+        'UPDATE users SET password = $1 WHERE email = $2',
+        [hashedPassword, email]
+    );
+
+    res.json({ message: "Đổi mật khẩu thành công!" });
+
+  } catch (err) {
+    console.error("Lỗi đổi mật khẩu:", err);
+    res.status(500).send('Lỗi Server');
+  }
+};
+
 module.exports = {
   getAllUsers, createUser, loginUser, updateUser, deleteUser,
   deleteUserPermanently, 
-  resetPasswordDirect, resetPasswordWithOTP
+  resetPasswordDirect, resetPasswordWithOTP, sendForgotPasswordOTP
 };

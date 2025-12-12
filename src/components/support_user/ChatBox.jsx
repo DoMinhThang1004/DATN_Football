@@ -18,7 +18,8 @@ const ChatBox = ({
     const [showSuggestions, setShowSuggestions] = useState(true); 
     const messagesEndRef = useRef(null);
     const socketRef = useRef(null);
-    const personalizedPrompt = `Chào ${userFullName}! Tôi là trợ lý AI FootballTic. Bạn cần hỗ trợ về vé, lịch đấu, chính sách hay thông tin nào khác?`;
+
+    const personalizedPrompt = `Chào ${userFullName}!\nTôi là trợ lý AI FootballTic.\nBạn cần hỗ trợ về vé, lịch đấu, chính sách hay thông tin nào khác?`;
 
     // gọi faq
     const fetchFaqSuggestions = async () => {
@@ -58,12 +59,14 @@ const ChatBox = ({
             });
         }
         const socket = socketRef.current;
+        
         const aiResponseHandler = (response) => {
             setMessages(prev => [...prev, { sender: 'ai', text: response }]);
         };
         const aiErrorHandler = (error) => {
              setMessages(prev => [...prev, { sender: 'ai', text: `[LỖI] ${error}` }]);
         };
+        
         socket.on('ai_response', aiResponseHandler);
         socket.on('ai_error', aiErrorHandler);
 
@@ -138,7 +141,7 @@ const ChatBox = ({
                                 key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`} >
                                 <div className='flex items-end gap-2'>
                                     {msg.sender === 'ai' && <Headset size={16} className='text-gray-400 min-w-[16px]'/>} 
-                                    <div className={`max-w-[85%] p-3 rounded-xl text-sm shadow-sm ${
+                                    <div className={`max-w-[85%] p-3 rounded-xl text-sm shadow-sm whitespace-pre-wrap leading-relaxed ${
                                         msg.sender === 'user' 
                                         ? 'bg-blue-500 text-white rounded-br-none order-1' 
                                         : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none order-1'

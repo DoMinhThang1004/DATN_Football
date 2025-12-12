@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-import { 
-  Plus, Search, Edit, Trash2, X, Save, Loader2, 
-  AlertTriangle, CheckCircle, Filter, Lock, Shield, User, UploadCloud, RefreshCcw 
-} from "lucide-react";
+import {  Plus, Search, Edit, Trash2, X, Save, Loader2,AlertTriangle, CheckCircle, Filter, Lock, Shield, User, UploadCloud, RefreshCcw } from "lucide-react";
+import { useNavigate } from "react-router-dom"; 
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE}/api/users`;
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000"; 
+const API_URL = `${API_BASE}/api/users`; 
 const UPLOAD_URL = `${API_BASE}/api/upload`;
 
 export default function ManageUsers() {
-  // quản lý
+  const navigate = useNavigate(); 
+  
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -25,8 +24,7 @@ export default function ManageUsers() {
   const [notification, setNotification] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  //kiểu xóa
-  const [deleteType, setDeleteType] = useState("soft"); // 'soft' | 'hard'
+  const [deleteType, setDeleteType] = useState("soft"); 
 
   const [formData, setFormData] = useState({
     full_name: "", email: "", phone: "", role: "USER", status: "ACTIVE", password: "", avatar_url: ""
@@ -37,10 +35,29 @@ export default function ManageUsers() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const getAuthHeaders = () => {
+      const token = localStorage.getItem("token");
+      return {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+      };
+  };
+
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(API_URL, {
+          method: "GET",
+          headers: getAuthHeaders()
+      });
+
+      //nếu chưa đn hay k phải ad
+      if (res.status === 401 || res.status === 403) {
+          showNotification("Phiên đăng nhập hết hạn hoặc không đủ quyền!", "error");
+          navigate("/login");
+          return;
+      }
+
       const data = await res.json();
       setUsers(data);
     } catch (error) {
@@ -52,32 +69,51 @@ export default function ManageUsers() {
   };
 
   useEffect(() => { fetchUsers(); }, []);
-    const handleAddNew = () => { setCurrentUser(null); setFormData({ full_name: "", email: "", phone: "", role: "USER", status: "ACTIVE", password: "", avatar_url: "" }); setIsModalOpen(true); };
-    const handleEdit = (user) => { setCurrentUser(user); setFormData({ full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, status: user.status, avatar_url: user.avatar_url || "", password: "" }); setIsModalOpen(true); };
-    const handleFileChange = async (e) => { 
-    const file = e.target.files[0]; if (!file) return; setIsUploading(true);
-        const data = new FormData(); data.append("file", file);
-        try { const res = await fetch(UPLOAD_URL, { method: "POST", body: data }); const result = await res.json(); setFormData({ ...formData, avatar_url: result.url }); showNotification("Upload avatar thành công!"); } 
-        catch (error) { showNotification("Lỗi upload ảnh!", "error"); } finally { setIsUploading(false); }
-    };
-        const handleSave = async (e) => {
-            e.preventDefault();
-            if (!formData.full_name.trim() || !formData.email.trim()) { showNotification("Vui lòng nhập đủ thông tin!", "error"); return; }
-            if (!currentUser && !formData.password) { showNotification("Vui lòng nhập mật khẩu khởi tạo!", "error"); return; }
-            try {
-                let response;
-                if (currentUser) response = await fetch(`${API_URL}/${currentUser.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-                else response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
 
-                if (response.ok) { showNotification(currentUser ? "Cập nhật thành công!" : "Thêm mới thành công!"); fetchUsers(); setIsModalOpen(false); } 
-                else { const err = await response.json(); showNotification(err.message || "Lỗi lưu dữ liệu", "error"); }
-            } catch (error) { showNotification("Lỗi kết nối!", "error"); }
-        };
+  const handleAddNew = () => { setCurrentUser(null); setFormData({ full_name: "", email: "", phone: "", role: "USER", status: "ACTIVE", password: "", avatar_url: "" }); setIsModalOpen(true); };
+  const handleEdit = (user) => { setCurrentUser(user); setFormData({ full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, status: user.status, avatar_url: user.avatar_url || "", password: "" }); setIsModalOpen(true); };
+  
+  const handleFileChange = async (e) => { 
+      const file = e.target.files[0]; if (!file) return; setIsUploading(true);
+      const data = new FormData(); data.append("file", file);
+      try { 
+          const res = await fetch(UPLOAD_URL, { method: "POST", body: data }); 
+          const result = await res.json(); 
+          setFormData({ ...formData, avatar_url: result.url }); 
+          showNotification("Upload avatar thành công!"); 
+      } 
+      catch (error) { showNotification("Lỗi upload ảnh!", "error"); } finally { setIsUploading(false); }
+  };
 
-  //xóa nâng cao
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!formData.full_name.trim() || !formData.email.trim()) { showNotification("Vui lòng nhập đủ thông tin!", "error"); return; }
+    if (!currentUser && !formData.password) { showNotification("Vui lòng nhập mật khẩu khởi tạo!", "error"); return; }
+    
+    try {
+        let response;
+        if (currentUser) {
+            response = await fetch(`${API_URL}/${currentUser.id}`, { 
+                method: 'PUT', 
+                headers: getAuthHeaders(),
+                body: JSON.stringify(formData) 
+            });
+        } else {
+            response = await fetch(API_URL, { 
+                method: 'POST', 
+                headers: getAuthHeaders(),
+                body: JSON.stringify(formData) 
+            });
+        }
+
+        if (response.ok) { showNotification(currentUser ? "Cập nhật thành công!" : "Thêm mới thành công!"); fetchUsers(); setIsModalOpen(false); } 
+        else { const err = await response.json(); showNotification(err.message || "Lỗi lưu dữ liệu", "error"); }
+    } catch (error) { showNotification("Lỗi kết nối!", "error"); }
+  };
+
   const confirmDelete = (user) => {
     setUserToDelete(user);
-    setDeleteType("soft"); //xóa mềm cho khôi phục
+    setDeleteType("soft");
     setDeleteModalOpen(true);
   };
 
@@ -87,22 +123,17 @@ export default function ManageUsers() {
     try {
         let apiUrl = `${API_URL}/${userToDelete.id}`;
         let method = 'DELETE';
-
-        //logic phân trang
         if (userToDelete.status === 'DELETED' && deleteType === 'restore') {
-            //khôi phục
             apiUrl = `${API_URL}/${userToDelete.id}`;
-            method = 'PUT'; //cập nhật
+            method = 'PUT'; 
         } else if (deleteType === 'hard') {
-            //xóa vĩnh viễn
             apiUrl = `${API_URL}/${userToDelete.id}/permanent`;
         } 
 
         const body = (method === 'PUT') ? JSON.stringify({ ...userToDelete, status: 'ACTIVE' }) : null;
-
         const res = await fetch(apiUrl, {
             method: method,
-            headers: method === 'PUT' ? { 'Content-Type': 'application/json' } : {},
+            headers: getAuthHeaders(),
             body: body
         });
 
@@ -110,7 +141,7 @@ export default function ManageUsers() {
             showNotification(
                 deleteType === 'restore' ? "Đã khôi phục tài khoản!" : 
                 deleteType === 'hard' ? "Đã xóa vĩnh viễn dữ liệu!" : 
-                "Đã xóa tạm thời!"
+                "Đã xóa tạm thời (Soft Delete)!"
             );
             fetchUsers();
         } else {
@@ -185,6 +216,7 @@ export default function ManageUsers() {
             </div>
         )}
       </div>
+
       {deleteModalOpen && userToDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">
@@ -198,39 +230,20 @@ export default function ManageUsers() {
                 {deleteType !== 'restore' && (
                     <div className="bg-gray-50 p-3 rounded-lg mb-4 text-left text-sm border border-gray-200">
                         <label className="flex items-start gap-3 cursor-pointer mb-3">
-                            <input 
-                                type="radio" name="delType" checked={deleteType === 'soft'}  onChange={() => setDeleteType('soft')}className="mt-1"/>
-                            <div>
-                                <span className="font-bold block">Xóa tạm thời (Khuyên dùng)</span>
-                                <span className="text-xs text-gray-500">Chuyển trạng thái sang DELETED. Giữ lại lịch sử đơn hàng, vé.</span>
-                            </div>
+                            <input type="radio" name="delType" checked={deleteType === 'soft'} onChange={() => setDeleteType('soft')} className="mt-1"/>
+                            <div><span className="font-bold block">Xóa tạm thời (Khuyên dùng)</span><span className="text-xs text-gray-500">Chuyển trạng thái sang DELETED. Giữ lại lịch sử.</span></div>
                         </label>
                         <label className="flex items-start gap-3 cursor-pointer">
-                            <input 
-                                type="radio" name="delType" 
-                                checked={deleteType === 'hard'} 
-                                onChange={() => setDeleteType('hard')}
-                                className="mt-1 accent-red-600" />
-                            <div>
-                                <span className="font-bold block text-red-600">Xóa vĩnh viễn</span>
-                                <span className="text-xs text-gray-500">Xóa sạch tài khoản và mọi dữ liệu liên quan (Vé, Đơn hàng, Bình luận...). Không thể khôi phục.</span>
-                            </div>
+                            <input type="radio" name="delType" checked={deleteType === 'hard'} onChange={() => setDeleteType('hard')} className="mt-1 accent-red-600"/>
+                            <div><span className="font-bold block text-red-600">Xóa vĩnh viễn</span><span className="text-xs text-gray-500">Xóa sạch mọi dữ liệu liên quan. Không thể khôi phục.</span></div>
                         </label>
                     </div>
                 )}
 
-                <p className="text-gray-600 mb-6 text-sm">
-                    Bạn đang thao tác với tài khoản: <strong>{userToDelete.email}</strong>
-                </p>
+                <p className="text-gray-600 mb-6 text-sm">Tài khoản: <strong>{userToDelete.email}</strong></p>
                 <div className="flex gap-3 justify-center">
                     <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Hủy</button>
-                    <button 
-                        onClick={handleDeleteExecute} 
-                        className={`px-4 py-2 text-white rounded-lg ${
-                            deleteType === 'restore' ? 'bg-green-600 hover:bg-green-700' : 
-                            deleteType === 'hard' ? 'bg-red-600 hover:bg-red-700' : 
-                            'bg-gray-600 hover:bg-gray-700'
-                        }`}  >
+                    <button onClick={handleDeleteExecute} className={`px-4 py-2 text-white rounded-lg ${deleteType === 'restore' ? 'bg-green-600 hover:bg-green-700' : deleteType === 'hard' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700'}`}>
                         {deleteType === 'restore' ? "Khôi phục ngay" : deleteType === 'hard' ? "Xóa vĩnh viễn" : "Xóa tạm thời"}
                     </button>
                 </div>
