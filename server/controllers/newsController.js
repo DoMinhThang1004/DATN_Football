@@ -1,15 +1,13 @@
 const pool = require('../db'); 
 
-// lấy ds tin tức
+// lấy ds tt
 const getAllNews = async (req, res) => {
     try {
-        const result = await pool.query(`
-            SELECT id, title, image_url, published_date, 
+        const result = await pool.query(` SELECT id, title, image_url, published_date, 
             LEFT(content, 200) as summary, author_id
             FROM news 
             WHERE status = 'published' OR status = 'draft'
-            ORDER BY published_date DESC
-        `);
+            ORDER BY published_date DESC`);
         res.json(result.rows);
     } catch (err) {
         console.error("Lỗi khi lấy danh sách tin tức:", err);
@@ -17,7 +15,7 @@ const getAllNews = async (req, res) => {
     }
 };
 
-// lấy chi tiết tin tức theo id
+// lấy ct tin tức theo id
 const getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -33,10 +31,9 @@ const getNewsById = async (req, res) => {
     }
 };
 
-// thêm tin tức
+// thêm
 const createNews = async (req, res) => {
     try {
-        // nhập dl từ form ad
         const { title, content, image_url, author_id, status } = req.body; 
         
         // chèn vào db
@@ -53,7 +50,7 @@ const createNews = async (req, res) => {
     }
 };
 
-// cập nhật tin tức
+// cập nhật
 const updateNews = async (req, res) => {
     try {
         const { id } = req.params;

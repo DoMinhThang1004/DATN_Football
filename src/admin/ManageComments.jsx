@@ -185,13 +185,11 @@ export default function ManageComments() {
                                         
                                         {comment.match_id && comment.home_team !== 'Trận đã xóa' ? (
                                             <Link 
-                                                // Link kèm ID (Anchor) để cuộn xuống comment
                                                 to={`/matches/${comment.match_id}#comment-${comment.id}`} 
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-xs text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-2 py-1 rounded w-fit border border-blue-100 transition-colors hover:bg-blue-100"
-                                                title="Xem bình luận này trên trang chi tiết"
-                                            >
+                                                title="Xem bình luận này trên trang chi tiết">
                                                 {comment.home_team} vs {comment.away_team} <ExternalLink size={10}/>
                                             </Link>
                                         ) : (
@@ -213,7 +211,6 @@ export default function ManageComments() {
                                             </div>
                                             <span className="text-[10px] text-gray-500 font-medium">({comment.rating}/5)</span>
                                         </div>
-                                        
                                         <p className="text-gray-800 text-sm leading-relaxed">{comment.content}</p>
                                         {comment.admin_reply && (
                                             <div className="mt-2 ml-2 pl-3 border-l-2 border-blue-400 bg-blue-50/50 p-2 rounded text-xs">
@@ -234,8 +231,7 @@ export default function ManageComments() {
                                     <td className="p-4 align-top text-right relative">
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === comment.id ? null : comment.id); }}
-                                            className={`p-2 rounded-full transition-colors ${openMenuId === comment.id ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                                        >
+                                            className={`p-2 rounded-full transition-colors ${openMenuId === comment.id ? 'bg-gray-200' : 'hover:bg-gray-100'}`}>
                                             <MoreVertical size={16} className="text-gray-500"/>
                                         </button>
 
@@ -244,31 +240,27 @@ export default function ManageComments() {
                                                 <div className="py-1">
                                                     <button 
                                                         onClick={() => { setActiveComment(comment); setReplyText(comment.admin_reply || ""); setReplyModalOpen(true); setOpenMenuId(null); }}
-                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2"
-                                                    >
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2">
                                                         <CornerDownRight size={14}/> Trả lời
                                                     </button>
                                                     {comment.status !== 'APPROVED' && (
                                                         <button 
                                                             onClick={() => updateStatus(comment.id, 'APPROVED')}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 flex items-center gap-2"
-                                                        >
+                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 flex items-center gap-2">
                                                             <CheckCircle size={14}/> Duyệt hiển thị
                                                         </button>
                                                     )}
                                                     {comment.status !== 'SPAM' && (
                                                         <button 
                                                             onClick={() => updateStatus(comment.id, 'SPAM')}
-                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
-                                                        >
+                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2">
                                                             <Ban size={14}/> Đánh dấu Spam
                                                         </button>
                                                     )}
                                                     <div className="border-t border-gray-100 my-1"></div>
                                                     <button 
                                                         onClick={() => { setCommentToDelete(comment); setDeleteModalOpen(true); setOpenMenuId(null); }}
-                                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                    >
+                                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                                                         <Trash2 size={14}/> Xóa vĩnh viễn
                                                     </button>
                                                 </div>
@@ -335,7 +327,7 @@ export default function ManageComments() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
             <div className="bg-white rounded-xl p-6 text-center w-80 shadow-xl transform transition-all scale-100">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600"><Trash2 size={24}/></div>
-                <h3 className="font-bold text-lg text-gray-800 mb-2">Xóa bình luận?</h3>
+                <h3 className="font-bold text-lg text-gray-800 mb-2">Xóa bình luận</h3>
                 <p className="text-gray-500 text-sm mb-6">Hành động này không thể hoàn tác.</p>
                 <div className="flex gap-3 justify-center">
                     <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200">Hủy</button>

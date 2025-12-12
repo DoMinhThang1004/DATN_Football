@@ -6,21 +6,15 @@ import AdminLayout from '../layouts/AdminLayout';
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_NEWS = `${API_BASE}/api/news`;
 
-// tiện ích chữ đậm cho admin
 const formatPreviewContent = (text) => {
     if (!text) return null;
     let htmlContent = text;
-    
-    // chuyển đổi xuống dòng thành thẻ <br/>
     htmlContent = htmlContent.replace(/\n/g, '<br/>');
-
-    // chuyển **chữ đậm** thành thẻ <b>
     htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); 
-
     return <div dangerouslySetInnerHTML={{ __html: htmlContent }} />;
 };
 
-// component form thêm,sửa tin tức
+// thêm,sửa tin tức
 const NewsForm = ({ newsToEdit, onClose, onSave }) => {
     const [formData, setFormData] = useState({ 
         title: '', content: '', image_url: '', status: 'draft' 
@@ -33,7 +27,6 @@ const NewsForm = ({ newsToEdit, onClose, onSave }) => {
             
             setFormData({
                 title: newsToEdit.title,
-                // chuyển \n thành xuống dòng thật
                 content: contentData.replace(/\\n/g, '\n'), 
                 image_url: newsToEdit.image_url,
                 status: newsToEdit.status
@@ -56,7 +49,6 @@ const NewsForm = ({ newsToEdit, onClose, onSave }) => {
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                // chuyển xuống dòng thành \n để lưu vào db
                 body: JSON.stringify({...formData, 
                     author_id: 1, 
                     content: formData.content.replace(/\n/g, '\\n') 
@@ -122,8 +114,6 @@ const NewsForm = ({ newsToEdit, onClose, onSave }) => {
                         <FileText size={18}/> Xem trước Bài viết
                     </h3>
                     <div className="bg-white border rounded-xl shadow-inner border-gray-100 p-4 h-full max-h-[60vh] overflow-y-auto">
-                        
-                        {/*ảnh*/}
                         {formData.image_url ? (
                             <img src={formData.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-4"/>
                         ) : (
@@ -134,8 +124,6 @@ const NewsForm = ({ newsToEdit, onClose, onSave }) => {
                         <h4 className="text-xl font-bold mb-3">{formData.title || "Tiêu đề mẫu"}</h4>
                         <p className="text-xs text-gray-500 mb-4">Ngày: {new Date().toLocaleDateString()}</p>
                         <hr className="mb-4"/>
-
-                        {/* hiển thị nd*/}
                         <div className="text-gray-700 text-base leading-relaxed">
                             {formatPreviewContent(formData.content)}
                         </div>
@@ -146,8 +134,6 @@ const NewsForm = ({ newsToEdit, onClose, onSave }) => {
     );
 };
 
-
-// main component quản lý tin tức
 export default function ManageNews() {
     const [newsList, setNewsList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -189,7 +175,7 @@ export default function ManageNews() {
     };
 
     const handleCreateNew = () => {
-        setEditingNews(null); // đặt null để tạo mới
+        setEditingNews(null); // đặt null tạo mới
         setShowForm(true);
     };
 
@@ -210,8 +196,7 @@ export default function ManageNews() {
                 </h1>
                 <button 
                     onClick={handleCreateNew}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-md"
-                >
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-md">
                     <Plus size={20}/> Thêm Tin Mới
                 </button>
             </div>
@@ -240,18 +225,13 @@ export default function ManageNews() {
                             <span className="col-span-2 text-center">Trạng thái</span>
                             <span className="col-span-1 text-right">Thao tác</span>
                         </div>
-
-
-                        {/*dl theo dòng */}
                         {newsList.map((news) => (
                             <div key={news.id} className="grid grid-cols-11 gap-4 items-center px-6 py-4 hover:bg-blue-50/50 transition-colors">
                                 <div className="col-span-1 text-sm font-medium text-gray-900">{news.id}</div>
                                 <div className="col-span-1">
                                     <img 
-                                        src={news.image_url || 'https://via.placeholder.com/60x40?text=FT'} 
-                                        alt="" 
-                                        className="w-12 h-10 object-cover rounded-md border"
-                                    />
+                                        src={news.image_url || 'https://via.placeholder.com/60x40?text=FT'} alt="" 
+                                        className="w-12 h-10 object-cover rounded-md border" />
                                 </div>
                                 <div className="col-span-3 flex flex-col">
                                     <span className="text-base font-semibold text-gray-800 line-clamp-1">{news.title}</span>

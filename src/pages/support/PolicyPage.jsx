@@ -3,7 +3,7 @@ import { Shield, FileText, CreditCard, AlertCircle, ChevronRight, Lock, FileChec
 import UserLayout from "../../layouts/UserLayout.jsx";
 
 export default function PolicyPage() {
-  const [activeTab, setActiveTab] = useState("terms");// terms privacy, payments
+  const [activeTab, setActiveTab] = useState("terms");
 
   const renderContent = () => {
     switch (activeTab) {
@@ -126,8 +126,6 @@ export default function PolicyPage() {
   return (
     <UserLayout>
       <div className="bg-gray-50 min-h-screen pb-20 font-sans">
-        
-        {/* --- HERO BANNER --- */}
         <div className="relative bg-gray-900 h-64 md:h-80 overflow-hidden flex items-center justify-center">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2000')] bg-cover bg-center opacity-30"></div>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/90"></div>
@@ -140,19 +138,14 @@ export default function PolicyPage() {
                 </p>
             </div>
         </div>
-
-        {/* --- MAIN CONTENT --- */}
         <div className="container mx-auto px-4 -mt-12 relative z-20">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-                
-                {/* SIDEBAR TABS */}
                 <div className="w-full md:w-1/4 bg-gray-50/50 border-r border-gray-200 p-6">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Danh mục</h4>
                     <nav className="space-y-2">
                         <button 
                             onClick={() => setActiveTab("terms")}
-                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-medium text-sm group ${activeTab === 'terms' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm'}`}
-                        >
+                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-medium text-sm group ${activeTab === 'terms' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm'}`}>
                             <div className="flex items-center gap-3">
                                 <FileText size={18} className={activeTab === 'terms' ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'}/>
                                 Điều khoản sử dụng
@@ -162,8 +155,7 @@ export default function PolicyPage() {
 
                         <button 
                             onClick={() => setActiveTab("privacy")}
-                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-medium text-sm group ${activeTab === 'privacy' ? 'bg-green-600 text-white shadow-lg shadow-green-200' : 'text-gray-600 hover:bg-white hover:text-green-600 hover:shadow-sm'}`}
-                        >
+                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-medium text-sm group ${activeTab === 'privacy' ? 'bg-green-600 text-white shadow-lg shadow-green-200' : 'text-gray-600 hover:bg-white hover:text-green-600 hover:shadow-sm'}`}>
                             <div className="flex items-center gap-3">
                                 <Shield size={18} className={activeTab === 'privacy' ? 'text-white' : 'text-gray-400 group-hover:text-green-500'}/>
                                 Chính sách bảo mật
@@ -173,8 +165,7 @@ export default function PolicyPage() {
 
                         <button 
                             onClick={() => setActiveTab("payment")}
-                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-medium text-sm group ${activeTab === 'payment' ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'text-gray-600 hover:bg-white hover:text-orange-500 hover:shadow-sm'}`}
-                        >
+                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all font-medium text-sm group ${activeTab === 'payment' ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'text-gray-600 hover:bg-white hover:text-orange-500 hover:shadow-sm'}`}>
                             <div className="flex items-center gap-3">
                                 <CreditCard size={18} className={activeTab === 'payment' ? 'text-white' : 'text-gray-400 group-hover:text-orange-500'}/>
                                 Thanh toán & Hoàn vé
@@ -182,16 +173,12 @@ export default function PolicyPage() {
                             {activeTab === 'payment' && <ChevronRight size={16}/>}
                         </button>
                     </nav>
-
-                    {/* Support Box Mini */}
                     <div className="mt-10 bg-blue-50 rounded-xl p-4 border border-blue-100 text-center">
                         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600 shadow-sm"><AlertCircle size={20}/></div>
                         <p className="text-xs text-gray-600 mb-2">Bạn có thắc mắc khác?</p>
                         <a href="mailto:support@footballtic.com" className="text-blue-600 text-xs font-bold hover:underline">Liên hệ ngay</a>
                     </div>
                 </div>
-
-                {/* CONTENT AREA */}
                 <div className="w-full md:w-3/4 p-8 md:p-12 bg-white">
                     {renderContent()}
                 </div>

@@ -30,7 +30,6 @@ export default function FAQPage() {
     const [loading, setLoading] = useState(true);
     const [openIndex, setOpenIndex] = useState(-1); 
 
-    //gọi api lấy dl
     useEffect(() => {
         fetch(API_FAQ)
             .then(res => {
@@ -70,8 +69,7 @@ export default function FAQPage() {
                         <button 
                             onClick={handleGoBack}
                             className="flex items-center text-blue-200 hover:text-white transition-colors font-medium mb-8 group">
-                            <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                            Quay lại
+                            <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" />Quay lại
                         </button>
 
                         <div className="text-center max-w-2xl mx-auto">

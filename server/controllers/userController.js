@@ -1,11 +1,10 @@
 const pool = require('../db');
-const bcrypt = require('bcrypt'); //thư viện mã hóa
+const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 
-//số vòng lặp xl mật khẩu
 const SALT_ROUNDS = 10;
 
-// cấu hình nodemailer
+//nodemailer
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -28,17 +27,14 @@ const getAllUsers = async (req, res) => {
 // tạo user mới
 const createUser = async (req, res) => {
   try {
-    // thêm gender, birth_date
     const { full_name, email, phone, password, role, status, avatar_url, gender, birth_date } = req.body;
     
     const checkEmail = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (checkEmail.rows.length > 0) {
       return res.status(400).json({ message: "Email này đã được sử dụng!" });
     }
-    
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    
-    // insert user
+    //is
     const newUser = await pool.query(
       `INSERT INTO users (full_name, email, phone, password, role, status, avatar_url, gender, birth_date) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
@@ -78,7 +74,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Sai mật khẩu!" });
     }
 
-    // logic khôi phục user đã xóa
+    //khôi phục user đã xóa
     if (storedUser.status === 'DELETED') {
          await pool.query("UPDATE users SET status = 'ACTIVE' WHERE id = $1", [storedUser.id]);
          console.log(`User ${storedUser.id} đã được khôi phục từ trạng thái DELETED.`);
@@ -98,7 +94,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-// cập nhật user
+// cập nhật
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -127,12 +123,12 @@ const updateUser = async (req, res) => {
   }
 };
 
-// xóa tạm thời nếu ad và kh muốn
+// xóa tạm thời, ad và kh muốn
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // cập nhật trạng thái thành xóa tạm thời
+    //trạng thái thành xóa tạm thời
     await pool.query("UPDATE users SET status = 'DELETED' WHERE id = $1", [id]);
     
     res.json({ message: "Tài khoản đã được xóa tạm thời." });
@@ -185,12 +181,12 @@ const deleteUserPermanently = async (req, res) => {
     }
 };
 
-// đổi mk trực tiếp gửi otp/ admin k cần
+// đổi mk trực tiếp gửi otp
 const resetPasswordDirect = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
     
-    // check xem có tồn tại tk k
+    // check tồn tại tk k
     const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (user.rows.length === 0) {
         return res.status(404).json({ message: "Email không tồn tại!" });
@@ -199,7 +195,7 @@ const resetPasswordDirect = async (req, res) => {
     // mã hóa mk
     const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
-    // cập nhật vô db
+    //vô db
     await pool.query(
         'UPDATE users SET password = $1 WHERE email = $2',
         [hashedPassword, email]

@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { 
-    Search, Calendar, MapPin, Filter, ChevronDown, Ticket, 
-    Loader2, ChevronLeft, ChevronRight, Flame, Check, X 
-} from "lucide-react"; 
+import { Search, Calendar, MapPin, Filter, ChevronDown, Ticket, Loader2, ChevronLeft, ChevronRight, Flame, Check, X} from "lucide-react"; 
 import { Link, useSearchParams } from "react-router-dom"; 
 import UserLayout from "../../layouts/UserLayout.jsx";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_MATCHES = `${API_BASE}/api/matches`;
 
-// Component con: Nút X (Dùng Lucide X thay vì SVG tự vẽ)
 const CloseIcon = ({size}) => <X size={size} />; 
 
 function MatchCard({ match }) {
@@ -56,39 +52,32 @@ function MatchCard({ match }) {
     );
 }
 
-// --- COMPONENT CHÍNH ---
 export default function MatchPage() {
     const [searchParams] = useSearchParams();
     
-    // Data State
     const [matches, setMatches] = useState([]);
-    const [leagues, setLeagues] = useState([]); // Lấy danh sách giải đấu từ API
-    const [bannerImages, setBannerImages] = useState([]); // Lấy banner từ API
+    const [leagues, setLeagues] = useState([]); // ds giải đấu
+    const [bannerImages, setBannerImages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // Filter State
     const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [selectedLeagues, setSelectedLeagues] = useState([]); 
     const [filterStatus, setFilterStatus] = useState("ALL");    
     const [sortBy, setSortBy] = useState("LATEST"); 
     
-    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12; 
-
-    // Banner State
     const [currentBanner, setCurrentBanner] = useState(0);
 
-    // --- FETCH DATA ---
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // 1. Lấy danh sách trận đấu
+                //ds trd
                 const res = await fetch(API_MATCHES);
                 const data = await res.json();
                 
-                // Format dữ liệu
+                //định dạng dl
                 const formattedMatches = data.map(m => ({
                     id: m.id,
                     homeTeam: m.home_team,
@@ -103,20 +92,14 @@ export default function MatchPage() {
                     price: m.price_min || 0 
                 }));
                 setMatches(formattedMatches);
-
-                // 2. Trích xuất danh sách giải đấu (Unique Leagues) từ dữ liệu trận đấu
-                // Thay vì dùng MOCK DATA, ta lấy thực tế từ DB có gì hiện nấy
                 const uniqueLeagues = [...new Set(formattedMatches.map(m => m.league))].filter(Boolean);
                 setLeagues(uniqueLeagues);
 
-                // 3. Lấy ảnh Banner từ các trận đấu nổi bật (hoặc trận sắp tới)
-                // Lấy 3 trận mới nhất có banner để làm slider
                 const banners = formattedMatches
                     .filter(m => m.bannerUrl)
                     .slice(0, 3)
                     .map(m => m.bannerUrl);
                 
-                // Nếu không có banner nào, dùng ảnh placeholder hoặc ảnh mặc định
                 if (banners.length > 0) {
                     setBannerImages(banners);
                 } else {
@@ -132,7 +115,6 @@ export default function MatchPage() {
         fetchData();
     }, []);
 
-    // --- AUTO SLIDE BANNER ---
     useEffect(() => {
         if (bannerImages.length <= 1) return;
         const timer = setInterval(() => {
@@ -141,7 +123,6 @@ export default function MatchPage() {
         return () => clearInterval(timer);
     }, [bannerImages]);
 
-    // --- LOGIC LỌC & SẮP XẾP ---
     let processedMatches = matches.filter((match) => {
         const matchInfo = `${match.homeTeam} ${match.awayTeam} ${match.stadium}`.toLowerCase();
         const matchesSearch = matchInfo.includes(searchTerm.toLowerCase());
@@ -161,7 +142,6 @@ export default function MatchPage() {
         return 0;
     });
 
-    // --- PHÂN TRANG ---
     useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedLeagues, filterStatus, sortBy]); 
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -183,8 +163,6 @@ export default function MatchPage() {
     return (
         <UserLayout>
             <div className="bg-gray-100 min-h-screen pb-20 font-sans">
-                
-                {/* --- BANNER --- */}
                 <div className="relative h-[300px] md:h-[400px] bg-gray-900 overflow-hidden group">
                     {bannerImages.map((img, index) => (
                         <div 
@@ -214,15 +192,9 @@ export default function MatchPage() {
                         </>
                     )}
                 </div>
-
-                {/* --- MAIN CONTENT --- */}
                 <div className="container mx-auto px-4 py-8 relative"> 
                     <div className="flex flex-col lg:flex-row gap-6 items-start"> 
-                        
-                        {/* --- SIDEBAR BỘ LỌC --- */}
                         <div className="w-full lg:w-1/5 space-y-6 flex-shrink-0 sticky top-24 z-10 h-fit">
-                            
-                            {/* Tìm kiếm */}
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                                 <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide"><Search size={16}/> Tìm kiếm</h3>
                                 <div className="relative">
@@ -237,8 +209,6 @@ export default function MatchPage() {
                                     )}
                                 </div>
                             </div>
-
-                            {/* Lọc Giải đấu (Dynamic from API) */}
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 max-h-[60vh] overflow-y-auto custom-scrollbar">
                                 <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide"><Filter size={16}/> Giải đấu</h3>
                                 <div className="space-y-2">
@@ -260,8 +230,6 @@ export default function MatchPage() {
                                     )}
                                 </div>
                             </div>
-
-                            {/* Lọc Trạng thái (Giữ nguyên Static) */}
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                                 <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide"><Ticket size={16}/> Trạng thái</h3>
                                 <div className="space-y-1">
@@ -284,8 +252,6 @@ export default function MatchPage() {
                             </div>
 
                         </div>
-
-                        {/* --- DANH SÁCH TRẬN ĐẤU --- */}
                         <div className="w-full lg:w-4/5">
                             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                                 <h2 className="text-lg font-bold text-gray-800 mb-2 sm:mb-0">
@@ -316,8 +282,6 @@ export default function MatchPage() {
                                             <MatchCard key={match.id} match={match} />
                                         ))}
                                     </div>
-                                    
-                                    {/* Pagination */}
                                     {totalPages > 1 && (
                                         <div className="flex justify-center items-center mt-12 gap-2">
                                             <button 

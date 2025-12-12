@@ -7,7 +7,7 @@ const API_BASE = `${API_HOST}/api`;
 
 export default function CommentSection({ matchId }) {
   const navigate = useNavigate();
-  const location = useLocation(); //bắt hash từ url
+  const location = useLocation(); //hash
   const textareaRef = useRef(null); 
 
   const [comments, setComments] = useState([]);
@@ -92,8 +92,6 @@ export default function CommentSection({ matchId }) {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-8 relative">
       {notification && <div className={`fixed top-24 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-white animate-in slide-in-from-top-5 duration-300 ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>{notification.type === 'success' ? <CheckCircle size={20}/> : <AlertTriangle size={20}/>}<span className="font-medium">{notification.message}</span></div>}
       <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><MessageSquare className="text-blue-600" /> Bình luận & Đánh giá</h3>
-      
-      {/*form nhập */}
       <div className="mb-8 flex gap-4 items-start">
         <div className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-500 font-bold border border-gray-200 overflow-hidden">{user?.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover"/> : <User size={20} />}</div>
         <div className="flex-1">
@@ -108,8 +106,6 @@ export default function CommentSection({ matchId }) {
             </div>
         </div>
       </div>
-
-      {/* ds cmt */}
       <div className="space-y-6">
         {isLoading ? <div className="flex justify-center"><Loader2 className="animate-spin text-blue-600"/></div> : comments.length > 0 ? (
             comments.map((comment) => (

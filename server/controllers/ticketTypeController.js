@@ -11,10 +11,9 @@ const getAllTicketTypes = async (req, res) => {
   }
 };
 
-//thêm mới vé
+//thêm
 const createTicketType = async (req, res) => {
   try {
-    //color_code,   base_price
     const { name, color_code, base_price, description } = req.body;
     const newType = await pool.query(
       'INSERT INTO ticket_types (name, color_code, base_price, description) VALUES ($1, $2, $3, $4) RETURNING *',
@@ -34,8 +33,7 @@ const updateTicketType = async (req, res) => {
     const { name, color_code, base_price, description } = req.body;
     await pool.query(
       'UPDATE ticket_types SET name = $1, color_code = $2, base_price = $3, description = $4 WHERE id = $5',
-      [name, color_code, base_price, description, id]
-    );
+      [name, color_code, base_price, description, id] );
     res.json("Cập nhật thành công!");
   } catch (err) {
     console.error(err.message);

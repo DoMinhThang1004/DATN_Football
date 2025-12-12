@@ -24,8 +24,6 @@ export default function TopNav() {
           />
         </div>
       </div>
-
-      {/* tb tĩnh */}
       <div className="flex items-center gap-4">
         <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Trợ giúp">
           <HelpCircle size={20} />

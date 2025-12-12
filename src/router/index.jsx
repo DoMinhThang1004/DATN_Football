@@ -73,7 +73,6 @@ const router = createBrowserRouter([
   { path: 'policy', element: <PolicyPage /> },
   { path: '*', element: <NotFoundPage /> },
 
-  //admin
   {   path: '/admin/dashboard', element: <Dashboard />,  children: []},
   {   path: '/admin/manage-matches', element: <ManageMatches />,  children: []},
   {   path: '/admin/manage-orders', element: <ManageOrders />,  children: []},

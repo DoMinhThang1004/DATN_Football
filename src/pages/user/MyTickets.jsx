@@ -5,7 +5,7 @@ import { useCart } from "../../context/CartContext.jsx";
 import OrderDetailModal from "../../components//support_user/OderDetailModel.jsx"; 
 
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const API_BASE = `${API_HOST}/api`; // api
+const API_BASE = `${API_HOST}/api`;
 const API_ORDER = `${API_HOST}/api/orders`;
 
 
@@ -18,7 +18,6 @@ const CANCEL_REASONS = [
 ];
 
 export default function MyTickets() {
-    //state
   const navigate = useNavigate();
   const { addToCart, clearCart } = useCart(); 
 
@@ -34,10 +33,10 @@ export default function MyTickets() {
   const [cancelReason, setCancelReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
   
-  // state cho model cảnh báo ghế đã mua
+  //model cảnh báo ghế đã mua
   const [unavailableSeatsModal, setUnavailableSeatsModal] = useState({ isOpen: false, seats: [], matchId: null });
 
-  // state xác nhận mua lại
+  //xác nhận mua lại
   const [reorderModalOpen, setReorderModalOpen] = useState(false);
   const [orderToReorderId, setOrderToReorderId] = useState(null);
 
@@ -105,15 +104,14 @@ export default function MyTickets() {
       }
   };
 
-  // bấm nút mua lại thì mở modal
+  //nút mua lại
   const handleReOrderClick = (orderId) => {
       setOrderToReorderId(orderId);
       setReorderModalOpen(true);
   };
 
-  //xử lý mua lại sau khi đồng ý
   const confirmReOrder = async () => {
-      setReorderModalOpen(false); // đóng modal
+      setReorderModalOpen(false);
       const orderId = orderToReorderId;
 
       try {
@@ -128,7 +126,7 @@ export default function MyTickets() {
               return;
           }
 
-          // kiểm tra từng vé xem còn trống không
+          //vé còn trống không
           const itemsToAdd = [];
           const unavailableSeats = [];
           
@@ -160,14 +158,13 @@ export default function MyTickets() {
 
           //xử lý kq
           if (unavailableSeats.length > 0) {
-              // hiện modal cảnh báo ghế đã mất
+              // tb ghế đã mất
               setUnavailableSeatsModal({
                   isOpen: true,
                   seats: unavailableSeats,
                   matchId: oldTickets[0].match_id 
               });
           } else {
-              // all ghế trống = Thêm vào giỏ = Chuyển trang
               clearCart(); 
               addToCart(itemsToAdd); 
               navigate('/checkout'); 
@@ -227,7 +224,6 @@ export default function MyTickets() {
         </div>
       </div>
 
-      {/* ds order*/}
       <div className="p-6 flex-1">
         {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="animate-spin text-blue-600"/></div>
@@ -252,8 +248,6 @@ export default function MyTickets() {
                                 <p className="text-xl font-black text-red-600">{Number(order.total_amount).toLocaleString()}đ</p>
                             </div>
                         </div>
-
-                        {/* ghi chú cho tt */}
                         {order.status === 'PENDING' && (
                             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-100 rounded-lg flex items-start gap-3 text-sm text-yellow-800">
                                 <AlertCircle size={16} className="mt-0.5 shrink-0"/>
@@ -269,10 +263,8 @@ export default function MyTickets() {
                         )}
                         
                         <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-                            {/* nút mua lại chỉ hiện khi đã hủy*/}
                             {order.status === 'CANCELLED' && (
                                 <button 
-                                    // GỌI HÀM MỚI ĐỂ MỞ MODAL
                                     onClick={() => handleReOrderClick(order.id)}
                                     className="px-4 py-2 border border-blue-200 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition flex items-center gap-2">
                                     <RefreshCcw size={16}/> Mua lại
@@ -303,8 +295,6 @@ export default function MyTickets() {
             </div>
         )}
       </div>
-
-      {/* Modal Hủy */}
       {cancelModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
               <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
@@ -338,16 +328,14 @@ export default function MyTickets() {
               </div>
           </div>
       )}
-
-      {/* modal cảnh báo ghế đã bán */}
       {unavailableSeatsModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
             <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
                 <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertTriangle size={32}/>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Rất tiếc!</h3>
-                <p className="text-gray-600 mb-4 text-sm">Các ghế sau đây đã bị người khác mua mất:</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Rất tiếc</h3>
+                <p className="text-gray-600 mb-4 text-sm">Các ghế sau đây đã không còn:</p>
                 <div className="bg-gray-50 rounded-xl p-3 mb-6 max-h-40 overflow-y-auto text-left border border-gray-200">
                     <ul className="space-y-1 text-sm font-medium text-gray-700">
                         {unavailableSeatsModal.seats.map((s, i) => (
@@ -372,8 +360,6 @@ export default function MyTickets() {
             </div>
         </div>
       )}
-
-      {/* xác nhận mua lại */}
       {reorderModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
             <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
@@ -382,7 +368,7 @@ export default function MyTickets() {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Mua lại</h3>
                 <p className="text-gray-600 mb-6 text-sm">
-                    Bạn có chắc chắn muốn đặt lại các vé trong đơn hàng này không? Giỏ hàng hiện tại (nếu có) sẽ bị thay thế.
+                    Bạn có chắc chắn muốn đặt lại các vé trong đơn hàng này không? Giỏ hàng hiện tại sẽ bị thay thế.
                 </p>
                 <div className="flex gap-3 justify-center">
                     <button 

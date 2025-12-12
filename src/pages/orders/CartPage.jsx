@@ -17,13 +17,9 @@ export default function CartPage() {
     message: ""
   });
   
-  // state modal yêu cầu đăng nhậ[]
+  //modal yc đăng nhập
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  // tính tổng tiền
   const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
-
-  // modal
   const openDeleteModal = (id) => {
     setConfirmModal({ isOpen: true, type: "delete", data: id, message: "Bạn có chắc chắn muốn xóa vé này khỏi giỏ hàng?" });
   };
@@ -50,13 +46,13 @@ export default function CartPage() {
     closeConfirmModal();
   };
 
-  // hàm xl thanh toán
+  //xl thanh toán
   const handleProceedToCheckout = () => {
-    //kiểm tra đăng nhập
+    //check đn
     const user = localStorage.getItem("currentUser");
     
     if (!user) {
-        //tb đăng nhập bằng modal
+        //tb đn
         setShowLoginModal(true);
         return;
     }
@@ -74,7 +70,6 @@ export default function CartPage() {
   return (
     <UserLayout>
       <div className="bg-gray-100 min-h-screen py-10 relative font-sans">
-        {/* yêu cầu đn */}
         {showLoginModal && (
             <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200 backdrop-blur-sm">
                 <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl transform scale-100 transition-all">
@@ -90,16 +85,12 @@ export default function CartPage() {
                         <p className="text-gray-600 mb-6 leading-relaxed">
                             Bạn cần đăng nhập tài khoản để tiếp tục thanh toán và lưu thông tin vé vào hồ sơ cá nhân.
                         </p>
-                        
-                        <div className="flex gap-3 justify-center">
-                            {/* hủy */}
+                  <div className="flex gap-3 justify-center">
                             <button 
                                 onClick={() => setShowLoginModal(false)}
                                 className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition text-sm">
                                 Để sau
                             </button>
-
-                            {/* đăng nhập */}
                             <button 
                                 onClick={() => navigate("/login")}
                                 className="px-6 py-2.5 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 shadow-lg shadow-blue-200 transition flex items-center gap-2 text-sm">
@@ -110,8 +101,6 @@ export default function CartPage() {
                 </div>
             </div>
         )}
-
-        {/* modal xác nhận*/}
         {confirmModal.isOpen && (
             <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 backdrop-blur-sm">
                 <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center relative transform transition-all scale-100">
@@ -134,14 +123,10 @@ export default function CartPage() {
         )}
 
         <div className="container mx-auto px-4">
-            
             <div className="mb-8">
                 <CheckoutSteps currentStep={1} />
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                {/* cột trái ds vé*/}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
@@ -220,7 +205,6 @@ export default function CartPage() {
                     </div>
                 </div>
 
-                {/* cột phải là tổng kết*/}
                 <div className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 sticky top-24">
                         <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
@@ -259,9 +243,7 @@ export default function CartPage() {
                                 ${cartItems.length === 0 
                                     ? 'bg-gray-300 cursor-not-allowed text-gray-500 shadow-none' 
                                     : 'bg-gray-900 hover:bg-black hover:shadow-gray-400'
-                                }
-                            `} >
-                            Tiến hành thanh toán <ArrowRight size={20}/>
+                                }`} >Tiến hành thanh toán <ArrowRight size={20}/>
                         </button>
                         
                         <div className="mt-6 p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-3">

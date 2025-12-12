@@ -1,14 +1,12 @@
 const pool = require('../db');
 
-//lấy danh sách trận đấu
+//lấy ds trận đấu
 const getAllMatches = async (req, res) => {
   try {
-    const query = `
-      SELECT m.*, s.name as stadium_name 
+    const query = `SELECT m.*, s.name as stadium_name 
       FROM matches m
       LEFT JOIN stadiums s ON m.stadium_id = s.id
-      ORDER BY m.start_time ASC
-    `;
+      ORDER BY m.start_time ASC`;
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
@@ -17,16 +15,14 @@ const getAllMatches = async (req, res) => {
   }
 };
 
-//lấy chi tiế t trận đấu theo id
+//lấy ct trận đấu id
 const getMatchById = async (req, res) => {
   try {
     const { id } = req.params;
-    const query = `
-      SELECT m.*, s.name as stadium_name, s.location as stadium_location
+    const query = `SELECT m.*, s.name as stadium_name, s.location as stadium_location
       FROM matches m
       LEFT JOIN stadiums s ON m.stadium_id = s.id
-      WHERE m.id = $1
-    `;
+      WHERE m.id = $1  `;
     const result = await pool.query(query, [id]);
     if (result.rows.length === 0) return res.status(404).json({ message: "Không tìm thấy trận đấu!" });
     res.json(result.rows[0]);
@@ -36,12 +32,12 @@ const getMatchById = async (req, res) => {
   }
 };
 
-//tạo mới trận đấu
+//tạo mới trd
 const createMatch = async (req, res) => {
   try {
     const { 
       home_team, away_team, home_logo, away_logo, 
-      stadium_id, start_time, status, total_tickets, league, banner_url //đã thêm banner_url vô cho trận đấu
+      stadium_id, start_time, status, total_tickets, league, banner_url
     } = req.body;
 
     const newMatch = await pool.query(
@@ -57,7 +53,7 @@ const createMatch = async (req, res) => {
   }
 };
 
-//cập nhật trận đấu
+//cập nhật trd
 const updateMatch = async (req, res) => {
   try {
     const { id } = req.params;
@@ -81,7 +77,7 @@ const updateMatch = async (req, res) => {
   }
 };
 
-// xóa trận đấu
+// xóa
 const deleteMatch = async (req, res) => {
   const client = await pool.connect();
   try {

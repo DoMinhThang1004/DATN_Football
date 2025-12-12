@@ -13,10 +13,9 @@ export default function Sidebar() {
   const navigate = useNavigate(); 
   const [isResourcesOpen, setIsResourcesOpen] = useState(false); 
   
-  //state tt đăng xuất
+  //đăng xuất
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
-  // tự động drop nếu ở trang con
   useEffect(() => {
     if (location.pathname.startsWith('/admin/manage-stadiums') || location.pathname.startsWith('/admin/manage-tickets')) {
       setIsResourcesOpen(true);
@@ -66,13 +65,13 @@ export default function Sidebar() {
     };
   }, []);
 
-  // xử lý hiển thị
+  //xl hiển thị
   const displayName = user?.full_name || user?.name || "Admin";
   const displayEmail = user?.email || "admin@ticket.com";
   const displayAvatar = user?.avatar_url || user?.avatar; 
   const firstChar = displayName.charAt(0).toUpperCase();
 
-  //xử lý đăng xuất
+  //xl đăng xuất
   const handleLogoutClick = () => {
       setLogoutModalOpen(true);
   };
@@ -108,45 +107,36 @@ export default function Sidebar() {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
-          
           <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-1">Tổng quan</p>
-          
           <Link 
             to="/admin/dashboard"  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${isActive('/admin/dashboard')}`}>
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
           </Link>
-
           <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">Quản lý</p>
-
           <Link 
             to="/admin/manage-matches"  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${isActive('/admin/manage-matches')}`}>
             <CalendarDays size={20} />
             <span>Lịch thi đấu</span>
           </Link>
-
           <Link 
             to="/admin/manage-orders" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${isActive('/admin/manage-orders')}`} >
             <ShoppingCart size={20} />
             <span>Đơn hàng</span>
           </Link>
-
-          {/* drop menu*/}
           <div className="space-y-1 pt-1">
             <button
               onClick={() => setIsResourcesOpen(!isResourcesOpen)}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm group ${
                   (location.pathname.startsWith('/admin/manage-stadiums') || location.pathname.startsWith('/admin/manage-tickets')) 
                   ? 'bg-gray-800 text-white' 
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                }`}>
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
                 <div className="flex items-center gap-3">
                   <Settings size={20} className={`transition-transform duration-300 ${isResourcesOpen ? 'rotate-90' : ''}`}/>
                   <span>Cấu hình hệ thống</span>
                 </div>
               {isResourcesOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} className="text-gray-600 group-hover:text-gray-400"/>}
             </button>
-
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isResourcesOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="ml-4 pl-4 border-l border-gray-700 space-y-1 mt-1 mb-2">
                 <Link 
@@ -163,7 +153,6 @@ export default function Sidebar() {
               </div>
             </div>
           </div>
-
           <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">Người dùng & Tương tác</p>
 
           <Link 
@@ -215,8 +204,6 @@ export default function Sidebar() {
                 </span>
               </div>
             </div>
-            
-            {/* nút đăng xuất*/}
             <button 
               className="p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-500 transition-all transform hover:scale-105"
               title="Đăng xuất"
@@ -226,8 +213,7 @@ export default function Sidebar() {
           </div>
         </div>
       </aside>
-
-      {/* tb xác nhận đx*/}
+      
       {logoutModalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center transform transition-all scale-100 border border-gray-100">

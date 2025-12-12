@@ -3,13 +3,9 @@ import { Link } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 import { Calendar, MapPin, ArrowRight, Loader2, Ticket, Flame, Zap, Trophy, Medal, Globe, ChevronLeft, ChevronRight, TrendingUp, Tag } from "lucide-react";
 
-// api url db
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// api url
 const API_URL = `${API_BASE}/api/matches`;
 
-// ds giải đấu nổi bật
 const FEATURED_LEAGUES = [
     { name: "Cúp Quốc Gia", icon: <Trophy size={32} />, color: "from-red-500 to-orange-500", desc: "Vô địch Quốc gia (V-League 1)" },
     { name: "Châu Á", icon: <Medal size={32} />, color: "from-yellow-400 to-yellow-600", desc: "Đỉnh cao Quốc tế" },
@@ -17,8 +13,6 @@ const FEATURED_LEAGUES = [
     { name: "SEA Games", icon: <Flame size={32} />, color: "from-green-500 to-emerald-500", desc: "Đại hội thể thao" },
     { name: "Giao Hữu", icon: <Zap size={32} />, color: "from-purple-500 to-pink-500", desc: "Giao lưu quốc tế" },
 ];
-
-//banner img
 const BANNER_IMAGES = [
     `${API_BASE}/uploads/1764953369361-934511660.jpg`,
     `${API_BASE}/uploads/banner-2.jpg`,
@@ -28,15 +22,11 @@ const BANNER_IMAGES = [
 export default function Home() {
   const [matches, setMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  //banner
   const [currentBanner, setCurrentBanner] = useState(0);
-
-  // banner tự động
   useEffect(() => {
     const timer = setInterval(() => {
         setCurrentBanner(prev => (prev + 1) % BANNER_IMAGES.length);
-    }, 5000); //5s đổi ảnh
+    }, 5000); //5s
     return () => clearInterval(timer);
   }, []);
 
@@ -45,7 +35,7 @@ export default function Home() {
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
-        // lọc lấy trận đấu sắo tới và đag bán
+        //lọc ds trd sắp tới
         const activeMatches = data.filter(m => m.status === 'UPCOMING' || m.status === 'SELLING');
         setMatches(activeMatches);
       } catch (error) {
@@ -64,9 +54,8 @@ export default function Home() {
     });
   };
 
-  // tách dl làm 2 nhóm
-  const hotMatches = matches.slice(0, 4);      // 4 trận 1 hàng
-  const upcomingMatches = matches.slice(4, 8); // 4 trận 1 hàng
+  const hotMatches = matches.slice(0, 4); 
+  const upcomingMatches = matches.slice(4, 8); 
 
   return (
     <UserLayout>
@@ -79,8 +68,6 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
             </div>
         ))}
-        
-        {/* nút chuyển ảnh */}
         <button onClick={() => setCurrentBanner((prev) => (prev - 1 + BANNER_IMAGES.length) % BANNER_IMAGES.length)} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/30 text-white rounded-full transition opacity-0 group-hover:opacity-100 backdrop-blur-sm z-20">
             <ChevronLeft size={32}/>
         </button>
@@ -111,8 +98,6 @@ export default function Home() {
             </div>
         </div>
       </div>
-
-      {/* giải đấu nổi bật */}
       <div className="bg-white py-12 border-b border-gray-100 shadow-sm relative z-20 -mt-4 rounded-t-3xl mx-2 md:mx-0">
           <div className="container mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -131,12 +116,8 @@ export default function Home() {
               </div>
           </div>
       </div>
-
-      {/* trận đấu */}
       <div id="match-list" className="bg-gray-50 py-16 space-y-16">
           <div className="container mx-auto px-4">
-            
-            {/* trận đấu hot*/}
             {isLoading ? (
                 <div className="flex justify-center py-20"><Loader2 className="animate-spin text-red-600" size={48}/></div>
             ) : (
@@ -155,8 +136,6 @@ export default function Home() {
                             </div>
                         </div>
                     )}
-
-                    {/* trận sắp diễn ra */}
                     {upcomingMatches.length > 0 && (
                         <div>
                             <div className="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
@@ -225,7 +204,6 @@ function MatchCard({ match, isHot }) {
         <Link 
             to={`/matches/${match.id}`} 
             className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full hover:-translate-y-1" >
-            {/* Banner Image */}
             <div className="relative h-40 bg-gray-900 overflow-hidden">
                 <img 
                     src={match.banner_url || match.home_logo || "https://via.placeholder.com/400x200"} alt="Match Banner" 
@@ -241,8 +219,6 @@ function MatchCard({ match, isHot }) {
                         </span>
                     )}
                 </div>
-
-                {/* vs logo */}
                 <div className="absolute bottom-0 left-0 w-full p-3 flex justify-between items-end">
                     <div className="flex flex-col items-center w-1/3">
                         <img src={match.home_logo} className="w-10 h-10 object-contain drop-shadow-md bg-white/10 rounded-full p-1 backdrop-blur-md" alt="Home"/>
@@ -253,8 +229,6 @@ function MatchCard({ match, isHot }) {
                     </div>
                 </div>
             </div>
-
-            {/* thông tin */}
             <div className="p-4 flex flex-col flex-1">
                 <div className="text-center mb-3">
                     <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-1 group-hover:text-blue-600 transition-colors uppercase">

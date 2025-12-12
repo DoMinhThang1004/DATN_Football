@@ -51,12 +51,10 @@ const createOrder = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
     try {
-        const result = await pool.query(`
-            SELECT o.*, u.full_name, u.phone, u.email 
+        const result = await pool.query(` SELECT o.*, u.full_name, u.phone, u.email 
             FROM orders o
             JOIN users u ON o.user_id = u.id
-            ORDER BY o.created_at DESC
-        `);
+            ORDER BY o.created_at DESC `);
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -64,23 +62,20 @@ const getAllOrders = async (req, res) => {
     }
 };
 
-// lấy thôgn tin đơn
+// lấy tt đơn
 const getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
         
-        const orderRes = await pool.query(`
-            SELECT o.*, u.full_name, u.email, u.phone 
+        const orderRes = await pool.query(` SELECT o.*, u.full_name, u.email, u.phone 
             FROM orders o
             JOIN users u ON o.user_id = u.id
-            WHERE o.id = $1
-        `, [id]);
+            WHERE o.id = $1 `, [id]);
 
         if (orderRes.rows.length === 0) return res.status(404).json({message: "Không tìm thấy đơn"});
 
         // lấy vé trong đơn
-        const ticketsRes = await pool.query(`
-            SELECT 
+        const ticketsRes = await pool.query(`SELECT 
                 t.id, t.seat_number, t.qr_code_string, t.status,
                 mtc.price, mtc.id as match_config_id, mtc.match_id,
                 sz.zone_name, 
@@ -93,8 +88,7 @@ const getOrderById = async (req, res) => {
             JOIN ticket_types tt ON mtc.ticket_type_id = tt.id
             JOIN matches m ON mtc.match_id = m.id
             JOIN stadiums s ON m.stadium_id = s.id
-            WHERE t.order_id = $1
-        `, [id]);
+            WHERE t.order_id = $1 `, [id]);
 
         const orderData = {
             ...orderRes.rows[0],
@@ -103,7 +97,7 @@ const getOrderById = async (req, res) => {
 
         res.json(orderData);
     } catch (err) {
-        console.error("❌ Lỗi lấy chi tiết đơn:", err.message);
+        console.error("Lỗi lấy chi tiết đơn:", err.message);
         res.status(500).send('Lỗi Server: ' + err.message);
     }
 };
@@ -119,7 +113,7 @@ const updateOrderStatus = async (req, res) => {
         res.status(500).send('Lỗi Server');
     }
 };
-// lấy đơn của ng dùng
+// lấy đơn ng dùng
 const getOrdersByUser = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -131,7 +125,7 @@ const getOrdersByUser = async (req, res) => {
         res.status(500).send('Lỗi Server');
     }
 };
-// hủy đơn
+// hủy 
 const cancelOrder = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -150,15 +144,12 @@ const cancelOrder = async (req, res) => {
             return res.status(400).json({ message: "Đơn hàng không thể hủy (Đã thanh toán hoặc đang giao)." });
         }
 
-        const ticketsRes = await client.query(`
-            SELECT match_config_id, COUNT(*) as count 
-            FROM tickets WHERE order_id = $1 GROUP BY match_config_id
-        `, [id]);
+        const ticketsRes = await client.query(` SELECT match_config_id, COUNT(*) as count 
+            FROM tickets WHERE order_id = $1 GROUP BY match_config_id `, [id]);
 
         for (const row of ticketsRes.rows) {
             await client.query(`
-                UPDATE match_ticket_configs SET quantity_sold = quantity_sold - $1 WHERE id = $2
-            `, [row.count, row.match_config_id]);
+                UPDATE match_ticket_configs SET quantity_sold = quantity_sold - $1 WHERE id = $2 `, [row.count, row.match_config_id]);
         }
 
         await client.query("UPDATE orders SET status = 'CANCELLED' WHERE id = $1", [id]);

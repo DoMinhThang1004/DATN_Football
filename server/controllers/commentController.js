@@ -1,19 +1,17 @@
 const pool = require('../db');
 
-//lấy ds bình luận theo trận đấu
+//lấy ds bình luận theo trd
 const getCommentsByMatch = async (req, res) => {
   try {
     const { matchId } = req.params;
-    //dùng left join để lấy tên tk nếu bị xóa tk thì cmt vẫn hiện với tên ẩn danh
-    const query = `
-      SELECT c.id, c.content, c.rating, c.status, c.admin_reply, c.created_at,
+    // lấy tên tk nếu bị xóa tk thì cmt hiện là ẩn danh
+    const query = ` SELECT c.id, c.content, c.rating, c.status, c.admin_reply, c.created_at,
              COALESCE(u.full_name, 'Người dùng ẩn danh') as full_name, 
              u.avatar_url
       FROM comments c
       LEFT JOIN users u ON c.user_id = u.id
       WHERE c.match_id = $1
-      ORDER BY c.created_at DESC
-    `;
+      ORDER BY c.created_at DESC`;
     const result = await pool.query(query, [matchId]);
     res.json(result.rows);
   } catch (err) {
@@ -22,23 +20,23 @@ const getCommentsByMatch = async (req, res) => {
   }
 };
 
-//tạo bình luận mới
+//tạo cmt mới
 const createComment = async (req, res) => {
   try {
     const { user_id, match_id, content, rating } = req.body;
     console.log("Nhận bình luận mới:", req.body); 
 
-    //trạng thái mặc định để duyệt
+    //trạng thái mặc định
     const status = 'APPROVED'; 
 
-    //thêm cmt vào database
+    //thêm cmt vào dl
     const newComment = await pool.query(
       `INSERT INTO comments (user_id, match_id, content, rating, status) 
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [user_id, match_id, content, rating || 5, status]
     );
 
-    //lấy thông tin tk và cmt để trả về fontend
+    //lấy thông tin tk và cmt để trả về
     const commentWithUser = await pool.query(
         `SELECT c.id, c.content, c.rating, c.status, c.admin_reply, c.created_at,
                 COALESCE(u.full_name, 'Người dùng ẩn danh') as full_name, 
@@ -56,11 +54,10 @@ const createComment = async (req, res) => {
   }
 };
 
-//lấy all cmt cho admin duyệt
+//lấy all cmt cho ad duyệt
 const getAllComments = async (req, res) => {
     try {
-        const query = `
-            SELECT 
+        const query = ` SELECT 
                 c.id, c.content, c.status, c.created_at, c.admin_reply,
                 COALESCE(u.full_name, 'Người dùng đã xóa') as user_name, 
                 u.avatar_url,
@@ -69,8 +66,7 @@ const getAllComments = async (req, res) => {
             FROM comments c
             LEFT JOIN users u ON c.user_id = u.id
             LEFT JOIN matches m ON c.match_id = m.id
-            ORDER BY c.created_at DESC
-        `;
+            ORDER BY c.created_at DESC `;
         const result = await pool.query(query);
         res.json(result.rows);
     } catch (err) {

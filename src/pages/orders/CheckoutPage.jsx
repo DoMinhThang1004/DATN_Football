@@ -7,22 +7,18 @@ import CheckoutSteps from "../../components/support_user/CheckoutSteps.jsx";
 import InvoiceModal from "../../components/support_user/CheckoutOnlDetail.jsx";
 import QRCode from "react-qr-code";
 
-// lấy link BE từ biến môi trường
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// api url (host)
 const API_BASE = `${API_HOST}/api`;
 const API_PAYMENT_VNPAY = `${API_HOST}/api/payment/create_payment_url`;
 const API_PAYMENT_MOMO = `${API_HOST}/api/payment/create_momo_url`; 
 
-// url logo
 const VNPAY_LOGO = "https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg";
 const MOMO_LOGO = "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png";
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();
 
-  // state
   const [currentUser, setCurrentUser] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [deliveryMethod, setDeliveryMethod] = useState("eticket"); 
@@ -42,7 +38,6 @@ export default function CheckoutPage() {
   const currentShippingFee = deliveryMethod === "shipping" ? 30000 : 0;
   const currentTotal = currentSubtotal + currentShippingFee;
 
-// data
   useEffect(() => {
     const userStr = localStorage.getItem("currentUser");
     if (!userStr) { navigate("/login"); return; }
@@ -105,7 +100,7 @@ export default function CheckoutPage() {
       } catch (error) { showNotification("Lỗi khi lưu địa chỉ!", "error"); }
   };
 
-  // xử lí thanh toán
+  // xl thanh toán
   const handleFinalPayment = async (statusOverride = null) => {
     if (deliveryMethod === 'shipping' && !selectedAddressId) { showNotification("Vui lòng chọn địa chỉ nhận vé!", "error"); return; }
     if (!isAgreed) { showNotification("Vui lòng đồng ý với điều khoản!", "error"); return; }
@@ -113,7 +108,7 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-        //luôn tạo đơn hàng với trạng thái PENDING trước
+        //đh vs trạng thíaPENDING 
         const orderPayload = {
             user_id: currentUser.id,
             total_amount: currentTotal,
@@ -129,7 +124,7 @@ export default function CheckoutPage() {
         const result = await res.json();
         if (!res.ok) throw new Error(result.message || "Đặt vé thất bại");
 
-        // xử lý vnpan
+        // xử lý
         if (paymentMethod === 'VNPAY') {
             try {
                 const vnpRes = await fetch(API_PAYMENT_VNPAY, {
@@ -149,7 +144,7 @@ export default function CheckoutPage() {
             }
         }
 
-        // xử lý momo
+        // xử lý 
         if (paymentMethod === 'MOMO') {
             try {
                 const momoRes = await fetch(API_PAYMENT_MOMO, {
@@ -198,7 +193,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // giao diện tt thành công
   if (isSuccess && finalOrderResult) {
     return (
       <UserLayout>
@@ -212,7 +206,6 @@ export default function CheckoutPage() {
     );
   }
 
-  // giao diện form
   return (
     <UserLayout>
       <div className="bg-gray-50 min-h-screen py-8 relative">
@@ -239,7 +232,6 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
                 
                 <div className="lg:col-span-2 space-y-6">
-                    {/* thông tin */}
                     <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b border-gray-100 pb-3"><Edit2 size={20} className="text-blue-600"/> 1. Thông tin người mua</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -263,12 +255,9 @@ export default function CheckoutPage() {
                             </div>
                         )}
                     </section>
-
-                    {/* 3. thanh toán onl vnpay */}
                     <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 border-b border-gray-100 pb-3"><CreditCard size={20} className="text-blue-600"/> 3. Thanh toán</h2>
                         <div className="space-y-3">
-                            {/* VNPAY */}
                             <label onClick={() => setPaymentMethod('VNPAY')} className={`relative flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all group ${paymentMethod === 'VNPAY' ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}>
                                 <input type="radio" name="payment" value="VNPAY" checked={paymentMethod === 'VNPAY'} readOnly className="w-5 h-5"/>
                                 <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center border border-gray-200 shadow-sm p-1">
@@ -280,8 +269,6 @@ export default function CheckoutPage() {
                                 </div>
                                 {paymentMethod === 'VNPAY' && <div className="absolute top-4 right-4 text-blue-600"><CheckCircle size={20} className="fill-blue-100"/></div>}
                             </label>
-
-                            {/* momo*/}
                             <label onClick={() => setPaymentMethod('MOMO')} className={`relative flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all group ${paymentMethod === 'MOMO' ? 'border-pink-500 bg-pink-50 ring-1 ring-pink-500' : 'border-gray-200 hover:border-gray-300'}`}>
                                 <input type="radio" name="payment" value="MOMO" checked={paymentMethod === 'MOMO'} readOnly className="w-5 h-5 accent-pink-600"/>
                                 <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center border border-gray-200 shadow-sm p-1">
@@ -293,8 +280,6 @@ export default function CheckoutPage() {
                                 </div>
                                 {paymentMethod === 'MOMO' && <div className="absolute top-4 right-4 text-pink-600"><CheckCircle size={20} className="fill-pink-100"/></div>}
                             </label>
-
-                            {/* cod*/}
                             {deliveryMethod === 'shipping' && (
                                 <label onClick={() => setPaymentMethod('COD')} className={`relative flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'COD' ? 'border-green-600 bg-green-50 ring-1 ring-green-500' : 'border-gray-200'}`}>
                                     <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} readOnly className="w-5 h-5"/>
@@ -306,15 +291,11 @@ export default function CheckoutPage() {
                         </div>
                     </section>
                 </div>
-
-                {/* cột phải là tổng */}
                 <div className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-200 sticky top-24">
                         <h3 className="font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100 flex items-center justify-between">
                             Đơn hàng <span className="bg-gray-100 text-xs px-2 py-1 rounded-full text-gray-500 font-normal">{cartItems.length} vé</span>
                         </h3>
-                        
-                        {/* ds ve */}
                         <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                             {cartItems.map((item, idx) => (
                                 <div key={idx} className="flex gap-3 items-start">

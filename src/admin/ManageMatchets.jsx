@@ -10,8 +10,7 @@ const STADIUM_API_URL = `${API_BASE}/api/stadiums`;
 const UPLOAD_URL = `${API_BASE}/api/upload`;
 
 //ds giải đấu phổ biến
-const LEAGUES = ["Cúp Quốc Gia (V-League1)", "AFF Cup (ASEAN Cup)", "SEA Games", 
-                "U23 Châu Á","Giao Hữu"];
+const LEAGUES = ["Cúp Quốc Gia (V-League1)", "AFF Cup (ASEAN Cup)", "SEA Games","U23 Châu Á","Giao Hữu"];
 
 export default function ManageMatches() {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ export default function ManageMatches() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
-  const [filterLeague, setFilterLeague] = useState("ALL"); //lọc giải đấu
+  const [filterLeague, setFilterLeague] = useState("ALL"); //lọc
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -32,12 +31,11 @@ export default function ManageMatches() {
   const [matchToDelete, setMatchToDelete] = useState(null);
   const [notification, setNotification] = useState(null);
   
-  //cập nhật trạng thái
+  //trạng thái
   const [isUploadingHome, setIsUploadingHome] = useState(false);
   const [isUploadingAway, setIsUploadingAway] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 
-  //form data
   const [formData, setFormData] = useState({
     home_team: "", away_team: "", 
     home_logo: "", away_logo: "",
@@ -74,19 +72,18 @@ export default function ManageMatches() {
 
   useEffect(() => { fetchData(); }, []);
 
-  //logic lọc dl
+  //lọc dl
   const filteredMatches = matches.filter(match => {
     const stadiumName = match.stadium_name || "";
     const matchInfo = `${match.home_team} ${match.away_team} ${stadiumName}`.toLowerCase();
     const matchesSearch = matchInfo.includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === "ALL" || match.status === filterStatus;
-    const matchesLeague = filterLeague === "ALL" || match.league === filterLeague; //lọc giải đấu
+    const matchesLeague = filterLeague === "ALL" || match.league === filterLeague; //lọc
 
     return matchesSearch && matchesStatus && matchesLeague;
   });
 
-  // logic phân ttang và rs về trang 1
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, filterLeague]);
@@ -179,8 +176,6 @@ export default function ManageMatches() {
             </div>
             <button onClick={handleAddNew} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"><Plus size={20} /><span>Thêm trận mới</span></button>
         </div>
-
-        {/*công cụ lọc*/}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col xl:flex-row gap-4">
             <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -188,7 +183,6 @@ export default function ManageMatches() {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3">
-                {/*lọc giải đấu*/}
                 <div className="relative min-w-[200px]">
                     <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <select className="w-full border border-gray-200 rounded-lg px-3 py-2 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer" value={filterLeague} onChange={(e) => setFilterLeague(e.target.value)}>
@@ -197,7 +191,6 @@ export default function ManageMatches() {
                     </select>
                 </div>
 
-                {/* lọc trạng thái*/}
                 <div className="relative min-w-[180px]">
                     <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <select className="w-full border border-gray-200 rounded-lg px-3 py-2 pl-9 text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -257,8 +250,7 @@ export default function ManageMatches() {
                                             match.status === 'SELLING' ? 'bg-green-50 text-green-700 border-green-200' :
                                             match.status === 'UPCOMING' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                             match.status === 'SOLD_OUT' ? 'bg-red-50 text-red-700 border-red-200' :
-                                            'bg-gray-100 text-gray-600 border-gray-200'
-                                        }`}>
+                                            'bg-gray-100 text-gray-600 border-gray-200'}`}>
                                             {match.status === 'SELLING' ? 'Đang bán' : match.status === 'UPCOMING' ? 'Sắp tới' : match.status === 'SOLD_OUT' ? 'Hết vé' : 'Kết thúc'}
                                         </span>
                                     </td>
@@ -277,8 +269,6 @@ export default function ManageMatches() {
                         </tbody>
                     </table>
                 </div>
-
-                {/* phântrang */}
                 {totalPages > 1 && (
                     <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50">
                         <span className="text-xs text-gray-500">
@@ -288,12 +278,9 @@ export default function ManageMatches() {
                             <button 
                                 onClick={() => handlePageChange(currentPage - 1)} 
                                 disabled={currentPage === 1}
-                                className="p-1.5 rounded-lg border bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
+                                className="p-1.5 rounded-lg border bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 <ChevronLeft size={16}/>
                             </button>
-                            
-                            {/* hiểnn thị số trang */}
                             {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
                                 <button 
                                     key={page}  onClick={() => handlePageChange(page)}className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${
@@ -395,7 +382,6 @@ export default function ManageMatches() {
         </div>
       )}
 
-      {/*xóa */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">

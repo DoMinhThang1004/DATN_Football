@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 import emailjs from '@emailjs/browser';
 
-// gọi biến môi trường
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
@@ -15,7 +14,6 @@ const RESET_API_DIRECT = `${API_BASE}/api/users/reset-password-direct`;
 export default function ForgotPassword() {
   const navigate = useNavigate();
   
-  // state từng bước: 1. nhập email \ 2. nhập otp \ 3. tb thành công
   const [step, setStep] = useState(1); 
   
   const [email, setEmail] = useState("");
@@ -26,7 +24,7 @@ export default function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // xử lý mail gửi otp
+  // xl mail gửi otp
   const handleSendEmail = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setError("Vui lòng nhập email!");
@@ -35,7 +33,7 @@ export default function ForgotPassword() {
     setError("");
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(otpCode); 
-    console.log("Mã OTP (Debug):", otpCode); //debug coi lỗi k
+    console.log("Mã OTP:", otpCode); //debug coi lỗi k
 
     const templateParams = {
         email: email, 
@@ -45,7 +43,7 @@ export default function ForgotPassword() {
 
     try {
         await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
-        setStep(2); // qua bước nhập otp
+        setStep(2); // nhập otp
     } catch (err) {
         console.error("Lỗi EmailJS:", err);
         setError("Gửi mail thất bại. Vui lòng thử lại sau.");
@@ -54,7 +52,7 @@ export default function ForgotPassword() {
     }
   };
 
-  // xử lý đổi mật khẩu
+  // xl đổi mk
   const handleResetPassword = async (e) => {
     e.preventDefault();
     
@@ -74,11 +72,9 @@ export default function ForgotPassword() {
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Đổi mật khẩu thất bại");
-
-        // chuyển sang bước 3
         setStep(3); 
         
-        // đợi 3s mới chuyển trang
+        // 3s chuyển trang
         setTimeout(() => {
             navigate("/login");
         }, 3000);
@@ -115,9 +111,6 @@ export default function ForgotPassword() {
                         </div>
                     )}
 
-                    {/* logic 3 bước*/}
-                    
-                    {/* b1 nhập email */}
                     {step === 1 && (
                         <form onSubmit={handleSendEmail} className="space-y-5">
                             <p className="text-gray-600 text-sm mb-2">Nhập email để nhận mã xác thực:</p>
@@ -134,7 +127,6 @@ export default function ForgotPassword() {
                         </form>
                     )}
 
-                    {/*b2 nhập otp đổi mk */}
                     {step === 2 && (
                         <form onSubmit={handleResetPassword} className="space-y-5 animate-in fade-in slide-in-from-right-4">
                             <p className="text-gray-600 text-sm">Mã OTP đã gửi tới <span className="font-bold">{email}</span></p>
@@ -161,7 +153,6 @@ export default function ForgotPassword() {
                         </form>
                     )}
 
-                    {/* b3 thành công*/}
                     {step === 3 && (
                         <div className="text-center py-8 animate-in zoom-in duration-300">
                             <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">

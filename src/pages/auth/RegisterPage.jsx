@@ -5,16 +5,12 @@ import UserLayout from "../../layouts/UserLayout.jsx";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// api đk
 const REGISTER_API = `${API_BASE}/api/users/register`;
-
-// url ảnh
 const BANNER_IMG = `${API_BASE}/uploads/banner-2.jpg`;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  // state
   const [formData, setFormData] = useState({
     fullName: "", 
     email: "",
@@ -29,7 +25,7 @@ export default function RegisterPage() {
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // state toast thông báo
+  //toast tb
   const [notification, setNotification] = useState(null);
 
   // hiển thị tb
@@ -66,7 +62,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-        // gọi api để đk
+        //gọi api để đk
         const res = await fetch(REGISTER_API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -123,19 +119,14 @@ export default function RegisterPage() {
             </div>
         </div>
 
-
         <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-6 relative overflow-y-auto"> 
-            
             <div className="w-full max-w-md border border-gray-200 rounded-3xl shadow-2xl p-8 md:p-10 my-10 lg:my-0 animate-in slide-in-from-right-10 duration-500">
-                
                 <div className="mb-6">
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">Tạo tài khoản</h2>
                     <p className="text-gray-500 text-sm">Điền thông tin để bắt đầu hành trình.</p>
                 </div>
 
                 <form onSubmit={handleRegister} className="space-y-4">
-                    
-                    {/*trường 1 */}
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-1.5">Họ và tên</label>
                         <div className="relative">
@@ -149,7 +140,6 @@ export default function RegisterPage() {
                         </div>
                     </div>
 
-                    {/* trường 2 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1.5">Email</label>
@@ -178,8 +168,6 @@ export default function RegisterPage() {
                             </div>
                         </div>
                     </div>
-
-                    {/* mk*/}
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-1.5">Mật khẩu</label>
                         <div className="relative">
@@ -199,8 +187,6 @@ export default function RegisterPage() {
                             </button>
                         </div>
                     </div>
-
-                    {/* nhập lại mk */}
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-1.5">Nhập lại mật khẩu</label>
                         <div className="relative">
@@ -220,8 +206,6 @@ export default function RegisterPage() {
                             </button>
                         </div>
                     </div>
-
-                    {/* điều khoản */}
                     <div className="flex items-start pt-2">
                         <input
                             id="terms" type="checkbox"
@@ -234,14 +218,11 @@ export default function RegisterPage() {
                             Tôi đồng ý với <a href="faq" className="text-blue-600 hover:underline font-bold">Điều khoản sử dụng</a> và <a href="policy" className="text-blue-600 hover:underline font-bold">Chính sách bảo mật</a>.
                         </label>
                     </div>
-
-                    {/* lỗi */}
                     {error && (
                         <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg flex items-center gap-2 border border-red-100 animate-in fade-in slide-in-from-top-2">
                             <AlertTriangle size={16} /> {error}
                         </div>
                     )}
-
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -256,9 +237,7 @@ export default function RegisterPage() {
                         <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase font-bold tracking-wider">Hoặc đăng ký với</span>
                         <div className="flex-grow border-t border-gray-200"></div>
                     </div>
-                    
                     <div className="mt-4 grid grid-cols-2 gap-4">
-                        {/* GG */}
                         <button className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-bold text-gray-700 shadow-sm group">
                             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -268,8 +247,6 @@ export default function RegisterPage() {
                             </svg>
                             Google
                         </button>
-
-                        {/* FB*/}
                         <button className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-bold text-gray-700 shadow-sm group">
                             <svg className="w-5 h-5 text-[#1877F2] fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -277,7 +254,6 @@ export default function RegisterPage() {
                             Facebook
                         </button>
                     </div>
-
                     <p className="mt-6 text-center text-sm text-gray-600">
                         Đã có tài khoản?{" "}
                         <Link to="/login" className="font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors">

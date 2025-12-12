@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-import { 
-  Search, Filter, Eye, Download, CheckCircle, XCircle, 
-  Clock, Printer, X, Loader2, AlertTriangle, ChevronLeft, ChevronRight 
-} from "lucide-react";
+import { Search, Filter, Eye, CheckCircle, XCircle, Clock, X, Loader2, AlertTriangle, ChevronLeft, ChevronRight} from "lucide-react";
 
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_BASE = `${API_HOST}/api`;
@@ -14,16 +11,16 @@ export default function ManageOrders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   
-  // model chi tiết
+  //chi t
   const [selectedOrder, setSelectedOrder] = useState(null); 
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [notification, setNotification] = useState(null);
 
   //phân trang
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;// sl mỗi trang
+  const itemsPerPage = 10;
 
-  // hàm hiển thị thông báo
+  //thông báo
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
@@ -52,7 +49,7 @@ export default function ManageOrders() {
     }
   };
 
-  //db tải đơn hàng
+  //db đơn hàng
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
@@ -72,7 +69,7 @@ export default function ManageOrders() {
     fetchOrders();
   }, []);
 
-  //xem chi tiết đơn hàng
+  //xem ct dh
   const handleViewDetail = async (orderId) => {
       setIsLoadingDetail(true);
       try {
@@ -91,7 +88,7 @@ export default function ManageOrders() {
       }
   };
 
-  //cập nhật trạng thái đơn
+  //cập nhật tthai
   const handleUpdateStatus = async (newStatus) => {
     if (!selectedOrder) return;
     
@@ -103,11 +100,7 @@ export default function ManageOrders() {
         });
         if (res.ok) {
             showNotification(`Đã cập nhật trạng thái thành: ${newStatus}`);
-            
-            // cập nhật ui modal
             setSelectedOrder({ ...selectedOrder, status: newStatus });
-            
-            // Ccp nhật ui danh sách
             setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, status: newStatus } : o));
         } else {
             showNotification("Lỗi khi cập nhật trạng thái", "error");
@@ -117,7 +110,7 @@ export default function ManageOrders() {
     }
   };
 
-  //lọc đơn hàng theo tìm kiếm và trạng thái
+  //lọc dh theo search
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = 
@@ -129,17 +122,15 @@ export default function ManageOrders() {
     return matchSearch && matchStatus;
   });
 
-  // reset trang khi thay đổi tìm kiếm hoặc lọc
+  // reset trang
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus]);
 
-  //tính toán phân trang
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentOrders = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
         setCurrentPage(newPage);
@@ -162,21 +153,15 @@ export default function ManageOrders() {
                 Tổng số: <span className="font-bold text-blue-600">{filteredOrders.length}</span> đơn hàng
             </p>
           </div>
-          <button className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all shadow-sm text-sm font-medium">
-            <Download size={18} />
-            <span>Xuất Excel</span>
-          </button>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
-              type="text" 
-              placeholder="Tìm mã đơn, tên khách, SĐT..." 
+              type="text" placeholder="Tìm mã đơn, tên khách, SĐT..." 
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+              onChange={(e) => setSearchTerm(e.target.value)}/>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
             <Filter size={18} className="text-gray-500" />
@@ -225,8 +210,7 @@ export default function ManageOrders() {
                                 <button 
                                     onClick={() => handleViewDetail(order.id)}
                                     className="p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-full transition-colors"
-                                    title="Xem chi tiết"
-                                >
+                                    title="Xem chi tiết">
                                     <Eye size={20} />
                                 </button>
                             </td>
@@ -261,8 +245,7 @@ export default function ManageOrders() {
                             <button key={page} onClick={() => handlePageChange(page)} className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${
                                     currentPage === page 
                                     ? 'bg-blue-600 text-white shadow-sm' 
-                                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
-                                }`}>
+                                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
                                 {page}
                             </button>
                         ))}
@@ -279,8 +262,6 @@ export default function ManageOrders() {
         </div>
 
       </div>
-
-      {/* ct đơn hàng */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -294,7 +275,6 @@ export default function ManageOrders() {
                     </button>
                 </div>
                 <div className="p-6 space-y-6 overflow-y-auto">
-                    {/* tt kh thanh toán*/}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                             <h4 className="text-sm font-bold text-blue-800 uppercase mb-3">Thông tin khách hàng</h4>
@@ -308,8 +288,6 @@ export default function ManageOrders() {
                             <p className="text-sm text-gray-600 mb-3">
                                 Phương thức: <span className="font-bold">{selectedOrder.payment_method}</span>
                             </p>
-                            
-                            {/* drop cập nhật tt */}
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs text-gray-400 font-semibold uppercase">Cập nhật trạng thái:</label>
                                 <select 
@@ -318,18 +296,15 @@ export default function ManageOrders() {
                                     className={`w-full border rounded-lg px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-colors
                                         ${selectedOrder.status === 'PAID' ? 'bg-green-100 text-green-800 border-green-200' : ''}
                                         ${selectedOrder.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : ''}
-                                        ${selectedOrder.status === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' : ''}
-                                    `}
-                                >
-                                    <option value="PENDING">⏳ Chờ thanh toán</option>
-                                    <option value="PAID">✅ Đã thanh toán</option>
-                                    <option value="CANCELLED">❌ Đã hủy</option>
+                                        ${selectedOrder.status === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' : ''}`}>
+                                    <option value="PENDING"> Chờ thanh toán</option>
+                                    <option value="PAID"> Đã thanh toán</option>
+                                    <option value="CANCELLED"> Đã hủy</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    {/* ct vé*/}
                     <div>
                         <h4 className="text-sm font-bold text-gray-700 uppercase mb-3">Danh sách vé đã đặt</h4>
                         <div className="border rounded-lg overflow-hidden shadow-sm">
@@ -372,15 +347,10 @@ export default function ManageOrders() {
                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3 shrink-0">
                     <button 
                         onClick={() => setSelectedOrder(null)}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors"
-                    >
+                        className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
                         Đóng
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm transition-colors">
-                        <Printer size={16} />
-                        In hóa đơn
-                    </button>
-                </div>
+               </div>
             </div>
         </div>
       )}

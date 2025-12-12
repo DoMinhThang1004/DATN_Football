@@ -9,7 +9,7 @@ const socket = io(SOCKET_SERVER_URL);
 
 const ADMIN_ID = 100; 
 
-// xử lý ảnh
+// xl ảnh
 const getImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http')) return url;
@@ -17,15 +17,12 @@ const getImageUrl = (url) => {
 };
 
 const AdminLiveChat = () => {
-    const [activeUser, setActiveUser] = useState(null); //id kh đang hiển thị chat
+    const [activeUser, setActiveUser] = useState(null);
     
-    // danh sách
-    const [requests, setRequests] = useState([]);      //hàng chờ chat
-    const [activeChats, setActiveChats] = useState([]); // đoạn chat
-
-    // tin nhắn theo userId và lưu tin nhắn
+    //ds
+    const [requests, setRequests] = useState([]);     
+    const [activeChats, setActiveChats] = useState([]);
     const [messagesMap, setMessagesMap] = useState({}); 
-    
     const [input, setInput] = useState('');
     const messagesEndRef = useRef(null);
     
@@ -38,10 +35,10 @@ const AdminLiveChat = () => {
         if (socket.connected) registerAdmin();
         socket.on('connect', registerAdmin);
         
-        //nhận yêu cầu mới
+        //nhận yc mới
         socket.on('new_live_request', (request) => {
             setRequests(prev => {
-                //nếu có trong chat hay chờ r thì dừng
+                //có trong chat, chờ thì dừng
                 const isChatting = activeChats.some(c => c.userId === request.userId);
                 const isPending = prev.some(r => r.userId === request.userId);
                 
@@ -50,15 +47,14 @@ const AdminLiveChat = () => {
             });
         });
         
-        //nhận tin nhắn từ user
+        //nhận tn từ user
         socket.on('live_message_from_user', (data) => {
             addMessage(data.userId, { sender: 'user', text: data.message, timestamp: new Date() });
-            //nếu chưa có trong active chat thì thêm vào
         });
 
-        //nhận tb hệ thống
+        // tb hệ thống
         socket.on('ai_response', (response) => {
-            //tb chung chung
+            //tb all
             if (activeUser) {
                  addMessage(activeUser, { sender: 'system', text: response, timestamp: new Date() });
             }
@@ -76,7 +72,7 @@ const AdminLiveChat = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messagesMap, activeUser]);
 
-    // thêm tin nhắn vào map
+    // thêm tn vào map
     const addMessage = (userId, msg) => {
         setMessagesMap(prev => ({
             ...prev,
@@ -84,11 +80,11 @@ const AdminLiveChat = () => {
         }));
     };
 
-    // xử lí chấp nhận
+    // xl chấp nhận
     const handleAcceptRequest = (request) => {
         socket.emit('accept_live_request', { userId: request.userId }); 
         
-        //xóa khỏi hàng chờ
+        //xóa hàng chờ
         setRequests(prev => prev.filter(r => r.userId !== request.userId));
         
         // thêm vào ds chat nếu chưa có
@@ -96,26 +92,24 @@ const AdminLiveChat = () => {
             setActiveChats(prev => [request, ...prev]);
         }
         
-        // chuyển sang chat với ng dùng đó
+        // chat với ngd
         setActiveUser(request.userId);
         addMessage(request.userId, { sender: 'system', text: `Đã kết nối với ${request.fullName}`, timestamp: new Date() });
     };
 
-    // chuyển qua lại giữa các đoạn chat
+    // chuyển qua lại
     const handleSelectChat = (user) => {
         setActiveUser(user.userId);
     };
     
-    // gửi tin nhắn
+    // gửi tn
     const handleSend = (e) => {
         e.preventDefault();
         if (input.trim() === '' || !activeUser) return;
-
         const adminMessage = input.trim();
         
-        // lưu tin nhắn
+        // lưu
         addMessage(activeUser, { sender: 'admin', text: adminMessage, timestamp: new Date() });
-        
         socket.emit('send_live_message_to_user', { userId: activeUser, message: adminMessage });
         setInput('');
     };
@@ -124,14 +118,13 @@ const AdminLiveChat = () => {
         return new Date(date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // lấy tn của ng dùng hiện tại
+    // lấy tn của ng dùng 
     const currentMessages = messagesMap[activeUser] || [];
     const currentUserInfo = activeChats.find(c => c.userId === activeUser);
 
     return (
         <AdminLayout>
             <div className="flex h-[85vh] bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-                {/*side bar*/}
                 <div className="w-1/3 min-w-[320px] border-r border-gray-200 bg-gray-50 flex flex-col">
                     <div className="p-5 border-b border-gray-200 bg-white shadow-sm z-10">
                         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -139,12 +132,11 @@ const AdminLiveChat = () => {
                         </h2>
                     </div>
 
-                    <div className="flex-grow overflow-y-auto p-3 space-y-6">   {/*danh sách chat */}
+                    <div className="flex-grow overflow-y-auto p-3 space-y-6">
                         <div>
                             <p className="text-xs font-bold text-green-600 uppercase tracking-wider px-2 mb-2 flex items-center gap-2">
                                 <CheckCircle size={12}/> Đang trò chuyện ({activeChats.length})
                             </p>
-                            
                             {activeChats.length === 0 && <p className="text-xs text-gray-400 px-4 italic">Chưa có cuộc hội thoại nào.</p>}
                             <div className="space-y-2">
                                 {activeChats.map((chat) => (
@@ -154,8 +146,7 @@ const AdminLiveChat = () => {
                                         className={`p-3 rounded-xl flex items-center gap-3 cursor-pointer transition-all border ${
                                             activeUser === chat.userId 
                                             ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-200' 
-                                            : 'bg-white border-gray-200 hover:bg-gray-100'
-                                        }`}>
+                                            : 'bg-white border-gray-200 hover:bg-gray-100' }`}>
                                         <div className="relative">
                                             {chat.avatarUrl ? (
                                                 <img src={getImageUrl(chat.avatarUrl)} alt="U" className="w-10 h-10 rounded-full object-cover"/>
@@ -194,7 +185,7 @@ const AdminLiveChat = () => {
                                         <button 
                                             onClick={() => handleAcceptRequest(req)}
                                             className="w-full bg-orange-500 text-white text-xs py-1.5 rounded-lg font-bold hover:bg-orange-600 transition" >
-                                            Tiếp nhận ngay
+                                            Tiếp nhận
                                         </button>
                                     </div>
                                 ))}
@@ -204,7 +195,7 @@ const AdminLiveChat = () => {
                     </div>
                 </div>
 
-                <div className="flex-grow flex flex-col bg-white">{/* khung chat*/}
+                <div className="flex-grow flex flex-col bg-white">
                     {activeUser && currentUserInfo ? (
                         <>
                             <div className="h-16 border-b border-gray-200 flex items-center justify-between px-6 bg-white flex-shrink-0 shadow-sm z-10">
@@ -238,8 +229,7 @@ const AdminLiveChat = () => {
                                                     className={`p-3 px-4 rounded-2xl text-sm shadow-sm leading-relaxed ${
                                                         msg.sender === 'admin' 
                                                         ? 'bg-blue-600 text-white rounded-tr-none' 
-                                                        : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
-                                                    }`} >
+                                                        : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none' }`} >
                                                     {msg.text}
                                                 </div>
                                                 <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">

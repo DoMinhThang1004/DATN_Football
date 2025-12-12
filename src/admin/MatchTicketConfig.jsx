@@ -1,4 +1,3 @@
-// ... (Giữ nguyên import và các phần trên)
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "../layouts/AdminLayout.jsx";
@@ -12,7 +11,7 @@ const API_BASE = `${API_HOST}/api`;
 
 
 export default function MatchTicketConfig() {
-  //state trạgn thái
+  //trạgn thái
   const { id } = useParams(); 
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +30,6 @@ export default function MatchTicketConfig() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  //data
   const fetchAllData = async () => {
       try {
           setIsLoading(true);
@@ -63,7 +61,6 @@ export default function MatchTicketConfig() {
               price: Number(c.price),
               quantity: c.quantity_allocated,
               sold: c.quantity_sold || 0,
-              //lưu capacity để hiển thị
               capacity: c.zone_capacity 
           }));
           setTicketConfigs(formattedConfigs);
@@ -181,7 +178,6 @@ export default function MatchTicketConfig() {
                         <div>
                              <label className="block text-sm font-medium text-gray-700 mb-1">Số lượng vé phát hành</label>
                              <input type="number" className="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 0})} />
-                             {/* hiển thị max sức chứa*/}
                              {formData.zoneId && (
                                  <p className="text-xs text-gray-400 mt-1 text-right">
                                      Sức chứa khu vực: <span className="font-bold text-gray-600">{stadiumZones.find(z => z.id == formData.zoneId)?.capacity || 0}</span> ghế

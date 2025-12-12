@@ -1,10 +1,9 @@
 const pool = require('./db'); 
 
-// lấy giá vé và loại vé
+// lấy giá và loại vé
 const getTicketPricingData = async () => {
     try {
-        const result = await pool.query(`
-            SELECT
+        const result = await pool.query(`SELECT
                 tt.name AS type_name, 
                 tt.description,
                 mtc.price,
@@ -15,11 +14,10 @@ const getTicketPricingData = async () => {
             JOIN matches m ON mtc.match_id = m.id
             WHERE m.start_time > NOW() 
             ORDER BY m.start_time ASC
-            LIMIT 3;
-        `);
+            LIMIT 3; `);
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query giá vé:", e);
+        console.error("Lỗi giá vé:", e);
         return null;
     }
 };
@@ -27,79 +25,71 @@ const getTicketPricingData = async () => {
 // lấy tt trận đấu sắp tới
 const getUpcomingMatches = async () => {
     try {
-        const result = await pool.query(`
-            SELECT 
+        const result = await pool.query(`SELECT 
                 home_team || ' vs ' || away_team AS match_name, 
                 start_time, 
                 league 
             FROM matches 
             WHERE start_time > NOW() 
             ORDER BY start_time ASC 
-            LIMIT 3
-        `);
+            LIMIT 3`);
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query trận đấu:", e);
+        console.error("Lỗi trận đấu:", e);
         return null;
     }
 };
 
-// lấy tt bảng FAQ chung
+// lấy tt bảng faq
 const getFaqData = async () => {
     try {
         const result = await pool.query("SELECT question, answer FROM faqs LIMIT 3");
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query FAQ:", e);
+        console.error("Lỗi FAQ:", e);
         return null;
     }
 };
 
-// lấy tt bảng FAQ về tài khoản và chính sách
+// lấy tt bảng FAQ về tk và chính sách
 const getAccountAndPolicyFAQs = async () => {
     try {
-        const result = await pool.query(`
-            SELECT question, answer FROM faqs 
+        const result = await pool.query(` SELECT question, answer FROM faqs 
             WHERE question ILIKE '%tài khoản%' OR question ILIKE '%mật khẩu%' OR question ILIKE '%chính sách%' OR question ILIKE '%quên%'
-            LIMIT 5
-        `);
+            LIMIT 5 `);
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query Account/Policy FAQs:", e);
+        console.error("Lỗi", e);
         return null;
     }
 };
 
-// lấy tt bảng sân vận động và khu vực
+// lấy tt sân vận động và khu vực
 const getStadiumAndZoneInfo = async () => {
     try {
-        const result = await pool.query(`
-            SELECT s.name AS stadium_name, sz.zone_name, sz.description
+        const result = await pool.query(` SELECT s.name AS stadium_name, sz.zone_name, sz.description
             FROM stadiums s
             JOIN stadium_zones sz ON s.id = sz.stadium_id
-            LIMIT 5
-        `);
+            LIMIT 5 `);
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query Sân vận động:", e);
+        console.error("Lỗi", e);
         return null;
     }
 };
 
-// lấy tt phương thức thanh toán
+// lấy tt pttt
 const getPaymentMethods = async () => {
     try {
-        const result = await pool.query(`
-            SELECT payment_method AS method_name 
+        const result = await pool.query(`SELECT payment_method AS method_name 
             FROM payments 
             -- FIX: Xóa WHERE status = 'active' vì nó là lỗi ENUM. 
             -- Chúng ta sẽ lấy TẤT CẢ các phương thức đã được sử dụng
             GROUP BY payment_method
-            LIMIT 5
-        `);
+            LIMIT 5 `);
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query Thanh toán:", e);
+        console.error("Lỗi Thanh toán:", e);
         return null;
     }
 };
@@ -107,21 +97,18 @@ const getPaymentMethods = async () => {
 // lấy tt chính sách hủy vé
 const getTicketCancellationPolicy = async () => {
     try {
-        const result = await pool.query(`
-            SELECT question, answer FROM faqs 
+        const result = await pool.query(` SELECT question, answer FROM faqs 
             WHERE question ILIKE '%hủy vé%' OR question ILIKE '%đổi vé%' OR question ILIKE '%hoàn tiền%'
-            LIMIT 3
-        `);
+            LIMIT 3 `);
         return result.rows;
     } catch (e) {
-        console.error("Lỗi query Chính sách Hủy vé:", e);
+        console.error("Lỗi Chính sách Hủy vé:", e);
         return null;
     }
 };
-//lưu lịch sử chat
+//lưu ls chat
 const saveChatMessage = async (userId, sender, messageText, topic = 'general') => {
-    
-    //check để lưu đúng cột
+    //check
     let userMessage = null;
     let botMessage = null;
 
@@ -149,25 +136,21 @@ const saveChatMessage = async (userId, sender, messageText, topic = 'general') =
     }
 };
 
-//lấy chi tiết các loại vé trong đơn hàng
+//lấy ct các loại vé trong đh
 const getOrderItems = async (orderId) => {
     try {
-        //đc sử dụng khi kh cần nhêìu tt
         //lấy tt vé trong đơn hàng
-        const result = await pool.query(
-            `SELECT 
+        const result = await pool.query( `SELECT 
                 oi.quantity,
                 mtc.price,
                 tt.name AS ticket_type_name
             FROM order_items oi
             JOIN match_ticket_configs mtc ON oi.match_config_id = mtc.id
             JOIN ticket_types tt ON mtc.ticket_type_id = tt.id
-            WHERE oi.order_id = $1`,
-            [orderId]
-        );
+            WHERE oi.order_id = $1`,  [orderId] );
         return result.rows;
     } catch (e) {
-        console.error(`Lỗi truy vấn chi tiết đơn hàng ID ${orderId}:`, e);
+        console.error(`Lỗi chi tiết đơn hàng ID ${orderId}:`, e);
         return null; 
     }
 };

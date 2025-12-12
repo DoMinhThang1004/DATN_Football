@@ -5,8 +5,8 @@ const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  // khởi tạo state từ localstorage
-  // kiểm tra xem trong kho có hàng chưa
+  //tạo state từ localstorage
+  // check xem kho có hàng chưa
   const [cartItems, setCartItems] = useState(() => {
     try {
       const storedCart = localStorage.getItem("shoppingCart");
@@ -17,15 +17,14 @@ export const CartProvider = ({ children }) => {
     }
   });
 
-  //tự động lưu vào localstorage khi giỏ hàng thay đổi
+  // lưu vào localstorage khi giỏ hàng thay đổi
   useEffect(() => {
     localStorage.setItem("shoppingCart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // các hàm xử lý
   const addToCart = (newItems) => {
     setCartItems((prev) => {
-      // kiểm tra trùng lặp 
+      //check trùng lặp 
       const uniqueItems = newItems.filter(
         (newItem) => !prev.some((item) => item.id === newItem.id)
       );
@@ -39,7 +38,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCartItems([]);
-    localStorage.removeItem("shoppingCart"); // xóa sạch kho
+    localStorage.removeItem("shoppingCart");
   };
 
   return (

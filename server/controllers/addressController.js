@@ -1,6 +1,6 @@
 const pool = require('../db');
 
-//lấy danh sách địa chỉ của User
+//lấy ds địa chỉ nd
 const getAddressesByUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -12,13 +12,13 @@ const getAddressesByUser = async (req, res) => {
   }
 };
 
-//thêm địa chỉ
+//thêm đc
 const addAddress = async (req, res) => {
   try {
     const { user_id, label, receiver_name, receiver_phone, detail } = req.body;
     
     const count = await pool.query('SELECT COUNT(*) FROM user_addresses WHERE user_id = $1', [user_id]);
-    if (parseInt(count.rows[0].count) >= 2) { //tối đa 2 địa chỉ
+    if (parseInt(count.rows[0].count) >= 2) { //tối đa 2
         return res.status(400).json({ message: "Bạn chỉ được lưu tối đa 2 địa chỉ!" });
     }
     const newAddr = await pool.query(

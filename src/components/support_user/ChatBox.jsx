@@ -33,14 +33,14 @@ const ChatBox = ({
         }
     };
 
-    //kết nối socket
+    //kn socket
     useEffect(() => {
         if (!isOpen) return; 
 
-        //xác định id kết nối
+        // id kết nối
         let connectionId = userId;
         if (!connectionId) {
-            // mỗi khách là mỗi tab riêng
+            //mỗi tk mỗi tab
             let guestId = sessionStorage.getItem('guest_chat_id');
             if (!guestId) {
                 guestId = `guest_${Math.floor(Math.random() * 1000000)}`;
@@ -49,7 +49,7 @@ const ChatBox = ({
             connectionId = guestId;
         }
 
-        // khởi tạo socket nếu chưa có
+        // khởi tạo socket
         if (!socketRef.current) {
             console.log(">> ChatBox: Connecting with ID:", connectionId);
             socketRef.current = io(SOCKET_SERVER_URL, {
@@ -58,19 +58,16 @@ const ChatBox = ({
             });
         }
         const socket = socketRef.current;
-
-        // nghe
         const aiResponseHandler = (response) => {
             setMessages(prev => [...prev, { sender: 'ai', text: response }]);
         };
         const aiErrorHandler = (error) => {
              setMessages(prev => [...prev, { sender: 'ai', text: `[LỖI] ${error}` }]);
         };
-
         socket.on('ai_response', aiResponseHandler);
         socket.on('ai_error', aiErrorHandler);
 
-        //tin nhắn chào
+        //tn chào
         if (messages.length === 0) {
             setMessages([{ sender: 'ai', text: personalizedPrompt }]);
         }
@@ -83,12 +80,11 @@ const ChatBox = ({
 
     }, [isOpen, userId]); 
 
-    //tự động scroll
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // hàm gửi tn chung
+    // hàm gửi tn all
     const sendMessage = (text) => {
         if (!socketRef.current) return;
         setMessages(prev => [...prev, { sender: 'user', text: text }]);
@@ -102,15 +98,14 @@ const ChatBox = ({
         sendMessage(input.trim());
     };
     
-    // xử lý khi ng dùng click vào nút faq
+    // xl ng dùng click vào nút faq
     const handleFaqClick = (questionText) => {
         sendMessage(questionText);
         setShowSuggestions(false); 
     };
 
-    // yêu cầu chat vs nhân viên
+    // yc chat vs nv
     const handleRequestLiveSupport = () => {
-        // gửi keyword đặc biệt để sv nhận diện
         const requestMessage = "Tôi muốn gặp nhân viên hỗ trợ trực tiếp.";
         sendMessage(requestMessage);
         setShowSuggestions(false);
@@ -159,21 +154,15 @@ const ChatBox = ({
 
                     {showSuggestions && (
                         <div className="bg-white p-3 border-t border-gray-200 flex-shrink-0 space-y-3">
-                            
-                            {/* nút chat vs nhân viên*/}
                             <button 
                                 onClick={handleRequestLiveSupport}
                                 className="w-full flex items-center justify-center gap-2 bg-orange-100 text-orange-700 p-2 rounded-lg hover:bg-orange-200 transition-colors font-semibold text-xs border border-orange-200">
                                 <Headphones size={14} /> Gặp Nhân Viên Hỗ Trợ
                             </button>
-
-                            {/*gợi ts faq*/}
                             <div>
                                 <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center justify-between">
                                     <span className='flex items-center gap-1'><Zap size={14} className="text-yellow-500"/> Gợi ý Nhanh</span>
-                                    <button onClick={() => setShowSuggestions(false)} className='text-gray-400 hover:text-gray-600 text-xs'>
-                                        X
-                                    </button>
+                                    <button onClick={() => setShowSuggestions(false)} className='text-gray-400 hover:text-gray-600 text-xs'>X</button>
                                 </p>
                                 <div className="space-y-2 max-h-24 overflow-y-auto">
                                     {faqSuggestions.map((faq) => (
@@ -200,8 +189,7 @@ const ChatBox = ({
                         
                         <input 
                             type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Gửi câu hỏi..."
-                            className={`flex-grow p-2 border rounded-lg focus:outline-none focus:border-blue-500 text-sm ${showSuggestions ? '' : 'rounded-r-none'}`}
-                        />
+                            className={`flex-grow p-2 border rounded-lg focus:outline-none focus:border-blue-500 text-sm ${showSuggestions ? '' : 'rounded-r-none'}`}/>
                         <button 
                             type="submit" className={`bg-blue-600 text-white p-2 ml-2 rounded-lg hover:bg-blue-700 transition ${!showSuggestions ? '' : 'rounded-l-none'}`}>
                             <Send size={20} />

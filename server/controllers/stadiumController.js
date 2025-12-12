@@ -1,6 +1,6 @@
 const pool = require('../db');
 
-//lấy danh sách sân
+//lấy ds sân
 const getAllStadiums = async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM stadiums ORDER BY id ASC');
@@ -11,7 +11,7 @@ const getAllStadiums = async (req, res) => {
   }
 };
 
-//thêm sân mới
+//thêm
 const createStadium = async (req, res) => {
   try {
     const { name, location, capacity, image_url, status } = req.body;
@@ -26,7 +26,7 @@ const createStadium = async (req, res) => {
   }
 };
 
-// cập nhật sân
+// cập nhật
 const updateStadium = async (req, res) => {
   try {
     const { id } = req.params;
@@ -42,7 +42,7 @@ const updateStadium = async (req, res) => {
   }
 };
 
-// xóa sân
+// xóa
 const deleteStadium = async (req, res) => {
   try {
     const { id } = req.params;

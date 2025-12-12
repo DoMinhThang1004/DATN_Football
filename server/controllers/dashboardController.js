@@ -2,51 +2,59 @@ const pool = require('../db');
 
 const getStats = async (req, res) => {
   try {
-    //tổng
-    const revenueRes = await pool.query(`
-      SELECT SUM(total_amount) as total 
+    // đh đã tt
+    const revenueRes = await pool.query(
+      ` SELECT SUM(total_amount) as total 
       FROM orders 
-      WHERE status = 'PAID'
-    `);
+      WHERE status = 'PAID' `);
     const totalRevenue = revenueRes.rows[0].total || 0;
 
-    //tổnh vé đã bán
-    const ticketRes = await pool.query(`
-      SELECT COUNT(*) as total 
+    const ticketRes = await pool.query(` SELECT COUNT(*) as total 
       FROM tickets 
-      WHERE status IN ('VALID', 'USED')
-    `);
+      WHERE status IN ('VALID', 'USED')`);
     const totalTickets = ticketRes.rows[0].total || 0;
 
-    //tổng tk user
-    const userRes = await pool.query(`
-      SELECT COUNT(*) as total 
+    const userRes = await pool.query(` SELECT COUNT(*) as total 
       FROM users 
-      WHERE role = 'USER'
-    `);
+      WHERE role = 'USER'`);
     const totalUsers = userRes.rows[0].total || 0;
 
-    //đơn hàng mới nhất hiện ra
-    const recentOrdersRes = await pool.query(`
-      SELECT 
+    //theo ngày, tổng tiền và số đơn
+    const chartRes = await pool.query(`SELECT 
+            TO_CHAR(created_at, 'DD/MM') as name, 
+            SUM(total_amount) as revenue,
+            COUNT(id) as tickets
+        FROM orders 
+        WHERE status = 'PAID' 
+        AND created_at >= NOW() - INTERVAL '7 days'
+        GROUP BY TO_CHAR(created_at, 'DD/MM'), DATE(created_at)
+        ORDER BY DATE(created_at) ASC `);
+
+    const chartData = chartRes.rows.map(item => ({
+        name: item.name,
+        revenue: Number(item.revenue),
+        tickets: Number(item.tickets)
+    }));
+
+    //đh ms nhất
+    const recentOrdersRes = await pool.query(`  SELECT 
         o.id, 
         o.total_amount, 
         o.status, 
         o.created_at,
-        u.full_name
-      FROM orders o LEFT JOIN users u ON o.user_id = u.id
+        u.full_name,
+        u.phone
+      FROM orders o 
+      LEFT JOIN users u ON o.user_id = u.id
       ORDER BY o.created_at DESC
-      LIMIT 50
-    `);
-// biểu đồ
-    const chartData = []; 
+      LIMIT 50 `);
 
     res.json({
       revenue: totalRevenue,
       tickets: totalTickets,
       users: totalUsers,
       recentOrders: recentOrdersRes.rows,
-      revenueChart: chartData
+      revenueChart: chartData // trả về 
     });
 
   } catch (err) {

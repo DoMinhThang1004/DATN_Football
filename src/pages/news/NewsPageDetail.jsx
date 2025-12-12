@@ -7,17 +7,15 @@ import UserLayout from "../../layouts/UserLayout.jsx";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_NEWS = `${API_BASE}/api/news`;
 
-// hàm xử lý ký tự xuống dòng \n
 const formatContent = (text) => {
     if (!text) return null;
     
-    // thay thế bằng thẻ đóng/mở paragraph
+    //đóng,mở
     let htmlContent = text.replace(/\\n\\n/g, '</p><p>');
 
-    // thay thế 1 dòng xuống còn lại (\\n) = thẻ xuống dòng đơn 
     htmlContent = htmlContent.replace(/\\n/g, '<br/>'); 
 
-    // bọc toàn bộ nội dung thẻ <p> nếu chưa bọc
+    // bọc all ndung
     if (!htmlContent.startsWith('<p>')) {
         htmlContent = `<p>${htmlContent}</p>`;
     }
@@ -25,7 +23,7 @@ const formatContent = (text) => {
 
     return (
         <div 
-            // luôn đảm bảo nội dung từ db là an toàn
+        //ndung
             dangerouslySetInnerHTML={{ __html: htmlContent }} 
         />
     );
@@ -85,8 +83,6 @@ export default function NewsDetailPage() {
             </UserLayout>
         );
     }
-
-    // render nd
     return (
         <UserLayout>
             <div className="bg-gray-50 min-h-screen pb-20 pt-10 font-sans">
@@ -103,32 +99,22 @@ export default function NewsDetailPage() {
                                 {newsItem.title}
                             </h1>
                             <div className="flex items-center text-sm text-gray-500 gap-6">
-                                
-                                {/* ngày đăng */}
                                 <span className="flex items-center gap-1">
                                     <CalendarDays size={16}/> {formatDate(newsItem.published_date)}
                                 </span>
-                                
-                                {/* tác giả */}
                                 <span className="flex items-center gap-1">
                                     <User size={16}/> Tác giả: <span className="font-medium text-gray-700"> {newsItem.author_id}</span>
                                 </span>
-                                
-                                {/* nguồn */}
                                 <span className="flex items-center gap-1">
                                     <Globe size={16}/> FootballTic
                                 </span>
                             </div>
                         </article>
-
-                        {/* ảnh đại diện */}
                         {newsItem.image_url && (
                             <div className="mb-8 rounded-xl overflow-hidden shadow-lg border border-gray-100">
                                 <img src={newsItem.image_url} alt={newsItem.title} className="w-full object-cover max-h-[400px]"/>
                             </div>
                         )}
-                        
-                        {/* nội dung chi tiết */}
                         <div className="prose max-w-none text-gray-800 leading-relaxed text-lg">
                             {formatContent(newsItem.content)}
                         </div>

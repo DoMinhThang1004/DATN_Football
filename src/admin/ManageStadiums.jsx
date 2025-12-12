@@ -3,19 +3,18 @@ import {
   Plus, MapPin, Edit, Trash2, Search, X, Save, Loader2, AlertTriangle, CheckCircle, UploadCloud, LayoutDashboard, Menu, Image as ImageIcon
 } from "lucide-react";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-// api url
+
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_URL = `${API_BASE}/api/stadiums`;
 const UPLOAD_URL = `${API_BASE}/api/upload`;
 
 
 export default function ManageStadiums() {
-  //trạng thái
+  //tthai
   const [stadiums, setStadiums] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStadium, setCurrentStadium] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -29,13 +28,13 @@ export default function ManageStadiums() {
 
   //cập nhật tt
   const [isUploading, setIsUploading] = useState(false);
-  const [fileName, setFileName] = useState(""); // tên file hiển thị
+  const [fileName, setFileName] = useState(""); // tên file
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  //db lấy dữ liệu sân
+  //db lấy dlu sân
   const fetchStadiums = async () => {
     setIsLoading(true);
     try {
@@ -46,12 +45,12 @@ export default function ManageStadiums() {
       setStadiums(data); 
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
-      // dl mẫu nếu lỗi
+      // dl mẫu 
       setStadiums([
           { id: 1, name: "Sân vận động Mỹ Đình", location: "Hà Nội", capacity: 40192, status: "ACTIVE", image_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/My_Dinh_National_Stadium.jpg/800px-My_Dinh_National_Stadium.jpg" },
           { id: 2, name: "Sân vận động Thống Nhất", location: "TP.HCM", capacity: 15000, status: "MAINTENANCE", image_url: "" }
       ]);
-      showNotification("Đang dùng dữ liệu Demo (API chưa chạy)", "error");
+      showNotification("Đang dùng dữ liệu Demo ", "error");
     } finally {
       setIsLoading(false);
     }
@@ -76,11 +75,11 @@ export default function ManageStadiums() {
         image_url: stadium.image_url || "", 
         status: stadium.status
     });
-    setFileName(""); // reset tên file
+    setFileName(""); // reset 
     setIsModalOpen(true);
   };
 
-//upload ảnh
+//upload
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,21 +91,21 @@ export default function ManageStadiums() {
     data.append("file", file);
 
     try {
-        //gọi api upload ảnh
+        //gọi api ảnh
         const res = await fetch(UPLOAD_URL, { method: "POST", body: data });
         
         if (!res.ok) throw new Error("API Upload failed");
 
         const result = await res.json();
         
-        // cập nhật url ảnh vào form data
+        // cập nhật url ảnh
         setFormData(prev => ({ ...prev, image_url: result.url }));
         showNotification("Upload ảnh thành công!");
 
     } catch (error) {
         console.warn("API Upload lỗi hoặc chưa có, dùng chế độ Preview cục bộ");
         
-        //demo chế độ preview cục bộ
+        //preview cục bộ
         setTimeout(() => {
             const fakeUrl = URL.createObjectURL(file);
             setFormData(prev => ({ ...prev, image_url: fakeUrl }));
@@ -126,11 +125,10 @@ export default function ManageStadiums() {
         capacity: Number(formData.capacity) || 0
     };
 
-    // tải payload lên console để kt
+    //debug
     console.log("Dữ liệu chuẩn bị gửi:", payload);
 
     try {
-        //gọi api real
         let response;
         const url = currentStadium ? `${API_URL}/${currentStadium.id}` : API_URL;
         const method = currentStadium ? 'PUT' : 'POST';
@@ -174,7 +172,7 @@ export default function ManageStadiums() {
   const handleDeleteExecute = async () => {
     if (!stadiumToDelete) return;
     
-    // demo trc xem
+    // demo
     setStadiums(prev => prev.filter(s => s.id !== stadiumToDelete.id));
     showNotification("Đã xóa sân vận động");
     setDeleteModalOpen(false);

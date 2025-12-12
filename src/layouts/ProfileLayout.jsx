@@ -3,7 +3,6 @@ import { User, Ticket, MapPin, LogOut, Camera, Image as ImageIcon, X, Upload, Ch
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import UserLayout from "./UserLayout.jsx"; 
 
-// api url
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_BASE = `${API_HOST}/api`;
 const UPLOAD_URL = `${API_HOST}/api/upload`;
@@ -14,17 +13,14 @@ export default function ProfileLayout() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // state dl user
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // state ui
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [tempFile, setTempFile] = useState(null);       
   const [tempPreview, setTempPreview] = useState(null); 
   const [isUploading, setIsUploading] = useState(false);
   
-  // state model đăng xuất và tb
+  //model đx và tb
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [notification, setNotification] = useState(null);
 
@@ -33,7 +29,7 @@ export default function ProfileLayout() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // lấy thông tin user
+  // lấy tt user
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
@@ -50,7 +46,7 @@ export default function ProfileLayout() {
     { path: "/profile/address", label: "Sổ địa chỉ", icon: <MapPin size={20} /> },
   ];
 
-  //hàm xử lý
+  //xử lý
   const openAvatarModal = () => {
     setTempFile(null);
     setTempPreview(null); 
@@ -70,7 +66,7 @@ export default function ProfileLayout() {
     if (!tempFile || !user) return;
     setIsUploading(true);
     try {
-        // úp load ảnh
+        //load ảnh
         const formData = new FormData();
         formData.append("file", tempFile);
 
@@ -97,7 +93,7 @@ export default function ProfileLayout() {
 
         if (!updateRes.ok) throw new Error("Lỗi cập nhật thông tin");
 
-        //cập nhật localstorage
+        //cập nhật local
         localStorage.setItem("currentUser", JSON.stringify(updatedUserData));
         setUser(updatedUserData);
         window.dispatchEvent(new Event("storage"));
@@ -112,7 +108,7 @@ export default function ProfileLayout() {
     }
   };
 
-  //xử lý đăng xuất
+  //xl đăng xuất
   const handleLogoutClick = () => {
       setShowLogoutModal(true); 
   };
@@ -142,7 +138,6 @@ export default function ProfileLayout() {
                 <span className="font-medium">{notification.message}</span>
             </div>
         )}
-
         <div className="container mx-auto px-4">
             {isAvatarModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fadeIn">
@@ -199,8 +194,6 @@ export default function ProfileLayout() {
                     </div>
                 </div>
             )}
-
-            {/*  model xn đăng xuất*/}
             {showLogoutModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 animate-fadeIn">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 text-center transform transition-all scale-100 shadow-2xl">
@@ -217,7 +210,6 @@ export default function ProfileLayout() {
             )}
 
           <div className="flex flex-col md:flex-row gap-6">
-            {/* side trái*/}
             <div className="w-full md:w-1/4">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
                 <div className="p-6 text-center border-b border-gray-100 bg-gradient-to-b from-blue-50 to-white">
@@ -244,8 +236,7 @@ export default function ProfileLayout() {
                           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
                         location.pathname === item.path
                           ? "bg-blue-600 text-white shadow-md"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                      }`}>
+                          : "text-gray-600 hover:bg-gray-50 hover:text-blue-600" }`}>
                       {item.icon}
                       {item.label}
                     </Link>

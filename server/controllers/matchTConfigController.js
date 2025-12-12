@@ -1,17 +1,15 @@
 const pool = require('../db');
 
-// lấy cấu hình vé theo trận đấu
+// lấy cấu hình vé trd
 const getByMatch = async (req, res) => {
     try {
         const { matchId } = req.params;
-        const query = `
-            SELECT mtc.*, tt.name as type_name, tt.color_code, sz.zone_name, sz.capacity as zone_capacity
+        const query = ` SELECT mtc.*, tt.name as type_name, tt.color_code, sz.zone_name, sz.capacity as zone_capacity
             FROM match_ticket_configs mtc
             JOIN ticket_types tt ON mtc.ticket_type_id = tt.id
             JOIN stadium_zones sz ON mtc.stadium_zone_id = sz.id
             WHERE mtc.match_id = $1
-            ORDER BY mtc.price DESC
-        `;
+            ORDER BY mtc.price DESC`;
         const result = await pool.query(query, [matchId]);
         res.json(result.rows);
     } catch (err) { console.error(err.message); res.status(500).send('Lỗi Server'); }
@@ -20,17 +18,15 @@ const getByMatch = async (req, res) => {
 const getZones = async (req, res) => {
     try {
         const { matchId } = req.params;
-        const query = `
-            SELECT sz.* FROM stadium_zones sz
+        const query = `SELECT sz.* FROM stadium_zones sz
             JOIN matches m ON m.stadium_id = sz.stadium_id
-            WHERE m.id = $1
-        `;
+            WHERE m.id = $1`;
         const result = await pool.query(query, [matchId]);
         res.json(result.rows);
     } catch (err) { console.error(err.message); res.status(500).send('Lỗi Server'); }
 };
 
-// kiểm tra sức chứa khi tạo hoặc cập nhật cấu hình vé
+// kiểm tra sức chứa khi tạo hay cập nhật
 const validateTicketQuantity = async (match_id, zone_id, new_quantity, exclude_config_id = null) => {
     // lấy tt khu vực để bt sức chứa
     const zoneRes = await pool.query('SELECT capacity, zone_name FROM stadium_zones WHERE id = $1', [zone_id]);
@@ -39,12 +35,12 @@ const validateTicketQuantity = async (match_id, zone_id, new_quantity, exclude_c
     const zoneMax = zoneRes.rows[0].capacity;
     const zoneName = zoneRes.rows[0].zone_name;
 
-    //nếu admin nhập quá thì lỗi
+    //nhập quá thì lỗi
     if (new_quantity > zoneMax) {
         return { valid: false, msg: `Khu vực "${zoneName}" chỉ có tối đa ${zoneMax} ghế! Bạn đang nhập ${new_quantity}.` };
     }
 
-    //kiểm tra tổng vé toàn trận đấu và tổng sức chứa
+    //kiểm tra sum vé trận đấu và tổng sức chứa
     const matchRes = await pool.query('SELECT total_tickets FROM matches WHERE id = $1', [match_id]);
     const matchMax = parseInt(matchRes.rows[0]?.total_tickets || 0);
     
@@ -67,11 +63,11 @@ const create = async (req, res) => {
   try {
     const { match_id, ticket_type_id, stadium_zone_id, price, total_quantity } = req.body;
     
-    // check xem trùng hay k
+    // check trùng hay k
     const check = await pool.query('SELECT * FROM match_ticket_configs WHERE match_id = $1 AND ticket_type_id = $2 AND stadium_zone_id = $3', [match_id, ticket_type_id, stadium_zone_id]);
     if (check.rows.length > 0) return res.status(400).json({ message: "Vé này đã được tạo rồi!" });
 
-    //soát số lượng vé
+    //soát sl vé
     const validation = await validateTicketQuantity(match_id, stadium_zone_id, parseInt(total_quantity));
     if (!validation.valid) return res.status(400).json({ message: validation.msg });
 
@@ -93,14 +89,13 @@ const update = async (req, res) => {
     const { id } = req.params;
     const { match_id, ticket_type_id, stadium_zone_id, price, total_quantity } = req.body;
 
-    // kiểm tra thử đã bán chưa
+    // check thử bán chưa
     const checkSold = await pool.query('SELECT quantity_sold, match_id FROM match_ticket_configs WHERE id = $1', [id]);
     if (checkSold.rows.length > 0) {
         const sold = checkSold.rows[0].quantity_sold;
         if (total_quantity < sold) return res.status(400).json({ message: `Không thể giảm dưới số vé đã bán (${sold})!` });
         
-        //số lượng
-        // lấy dl tên là id để kiểm tra
+        // lấy dl id để kiểm tra
         const realMatchId = checkSold.rows[0].match_id;
         const validation = await validateTicketQuantity(realMatchId, stadium_zone_id, parseInt(total_quantity), id);
         if (!validation.valid) return res.status(400).json({ message: validation.msg });
@@ -118,7 +113,7 @@ const update = async (req, res) => {
   }
 };
 
-// xóa cấu hình vé
+// xóa ch
 const remove = async (req, res) => {
     try {
       const { id } = req.params;

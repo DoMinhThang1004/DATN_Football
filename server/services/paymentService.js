@@ -67,7 +67,7 @@ const paymentService = {
         return vnpUrl + '?' + signData + '&vnp_SecureHash=' + signed;
     },
 
-    //xủ lý trả về từ vnpay
+    //xủ lý trả về vnpay
     verifyVnpayReturn: async (vnp_Params) => {
         const secureHash = vnp_Params['vnp_SecureHash'];
 
@@ -94,26 +94,24 @@ const paymentService = {
             //lấy tt thêm 
             const amount = vnp_Params['vnp_Amount'] / 100;
             const transactionNo = vnp_Params['vnp_TransactionNo'];
-            const bankCode = vnp_Params['vnp_BankCode'];// lưu ngân hàng nếu muốn
+            const bankCode = vnp_Params['vnp_BankCode'];
             
             const orderCheck = await pool.query("SELECT * FROM orders WHERE id = $1", [orderId]);
             if (orderCheck.rows.length === 0) {
                 return { code: "97", message: "Không tìm thấy đơn hàng" };
             }
-
             const currentOrder = orderCheck.rows[0];
 
-            //nếu thanh toán ok r thì trả về
+            //tt ok r thì trả về
             if (currentOrder.status === 'PAID') {
                 return { code: "00", message: "Giao dịch đã thành công trước đó", orderId };
             }
 
             if (vnp_Params['vnp_ResponseCode'] === '00' && vnp_Params['vnp_TransactionStatus'] === '00') {
                 // cập nhật paid khi vnpay và momo ==00
-                // cập nhật đơn hàng
                 await pool.query("UPDATE orders SET status = 'PAID', payment_method = 'VNPAY' WHERE id = $1", [orderId]);
                 
-                // thêm vào bảng thanh toán nếu chưa có
+                // thêm vào bảng thanh toán
                 const paymentCheck = await pool.query("SELECT id FROM payments WHERE transaction_code = $1", [transactionNo]);
                 if (paymentCheck.rows.length === 0) {
                     await pool.query(
@@ -126,7 +124,7 @@ const paymentService = {
 
                 return { code: "00", message: "Giao dịch thành công", orderId };
             } else {
-                // nếu có bất kỳ trạng thái nào khác
+                // nếu có trạng thái nào khác
                 await pool.query("UPDATE orders SET status = 'PENDING' WHERE id = $1", [orderId]);
                 return { code: "97", message: "Giao dịch thất bại" };
             }
@@ -141,7 +139,6 @@ const paymentService = {
         const requestId = orderId;
         const requestType = "captureWallet";
         const extraData = ""; 
-        
         const rawSignature = `accessKey=${MOMO_ACCESS_KEY}&amount=${amount}&extraData=${extraData}&ipnUrl=${MOMO_IPN_URL}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${MOMO_PARTNER_CODE}&redirectUrl=${MOMO_RETURN_URL}&requestId=${requestId}&requestType=${requestType}`;
         const signature = crypto.createHmac('sha256', MOMO_SECRET_KEY).update(rawSignature).digest('hex');
 
@@ -161,26 +158,22 @@ const paymentService = {
     
     //kiểm tra tb từ momo
     if (resultCode != '0') {
-        //cập nhật trạng thái thành PENDING 
+        //cập nhật trạng thái
         await pool.query("UPDATE orders SET status = 'PENDING' WHERE id = $1", [orderId]);
         
-        // trả về lỗi 99 để controller biết là thất bại và trả về
+        // trả về lỗi để controller biết thất bại và trả về
         return { code: "99", message: "Giao dịch thất bại hoặc bị hủy" }; 
     }
     
-    //xử lý trạng thái đã PAID 
+    //xử lý trạng thái
     if (currentOrder.status === 'PAID') { 
-         //đơn hàng được xử lý thành công trước đó
          return { code: "00", message: "Giao dịch đã thành công trước đó", orderId };
     }
-    //xử lý giao dịch thành công
+    //xử lý gd thành công
     if (resultCode == '0') {
-        // thành công thì PAID
         await pool.query("UPDATE orders SET status = 'PAID', payment_method = 'MOMO' WHERE id = $1", [orderId]);
         return { code: "00", message: "Giao dịch thành công", orderId };
     }
-    
-    //nếu tới đây mà k đc thì lỗi mặc định
     return { code: "99", message: "Lỗi xử lý trạng thái." };
 }
 };

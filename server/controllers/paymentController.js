@@ -56,24 +56,23 @@ const momoReturn = async (req, res) => {
         if (result.code === "00") {
             return res.json(result); 
         } else {
-            // thất bại hay hủy thì trẻ về  tttp stasus 400
+            // thất bại, hủy trẻ về http 400
             return res.status(400).json(result); 
         }
     } catch (error) {
-        console.error("Lỗi SERVER MOMO RETURN:", error);
+        console.error("Lỗi server momo return:", error);
         return res.status(500).json({ code: "500", message: "Lỗi Server Nội Bộ" });
     }
 };
 
 const momoIPN = async (req, res) => {
-    // xử lý ipn momo nếu khó thì xl bằng service
+    // xử lý ipn momo
     try {
         const { resultCode, orderId } = req.body;
-        // táii sử dụng hàm verify nếu muốn logic riêng
+        // tái sử dụng hàm verify nếu muốn logic riêng
         if (resultCode == 0) {
              // chạy demo
              const paymentService = require('../services/paymentService');
-             // await paymentService.updateStatus(orderId, 'PAID');
         }
         res.status(204).send(); 
     } catch (e) {

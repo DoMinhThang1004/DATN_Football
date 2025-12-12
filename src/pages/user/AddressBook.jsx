@@ -5,12 +5,10 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_URL = `${API_BASE}/api/addresses`;
 
 export default function AddressBook() {
-  // state dl
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // state modal và form
   const [showFormModal, setShowFormModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false); 
@@ -21,13 +19,11 @@ export default function AddressBook() {
   const [form, setForm] = useState({ label: 'Nhà riêng', detail: '', receiverName: '', receiverPhone: '' });
   const [error, setError] = useState(""); 
 
-  // data
   const fetchAddresses = async (userId) => {
     setIsLoading(true);
     try {
         const res = await fetch(`${API_URL}/user/${userId}`);
         const data = await res.json();
-        // map snake_case be  sang camelCase fe
         const mappedData = data.map(addr => ({
             id: addr.id,
             label: addr.label,
@@ -51,7 +47,6 @@ export default function AddressBook() {
     }
   }, []);
 
-  // xử lý form
   const handleEdit = (addr) => {
     setEditingId(addr.id);
     setForm(addr);
@@ -80,7 +75,7 @@ export default function AddressBook() {
         return;
     }
     
-    // chuẩn bị dữ liệu gửi lên
+    //dl gửi lên
     const payload = {
         user_id: currentUser.id,
         label: form.label,
@@ -92,14 +87,12 @@ export default function AddressBook() {
     try {
         let res;
         if (editingId) {
-            // put
             res = await fetch(`${API_URL}/${editingId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
         } else {
-            // post
             res = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -108,7 +101,7 @@ export default function AddressBook() {
         }
 
         if (res.ok) {
-            fetchAddresses(currentUser.id); // load lại ds
+            fetchAddresses(currentUser.id); // load ds
             setShowFormModal(false);
         } else {
             const err = await res.json();
@@ -119,7 +112,7 @@ export default function AddressBook() {
     }
   };
 
-  //xử lý xóa
+  //xl xóa
   const requestDelete = (id) => {
     setDeleteId(id);
     setShowDeleteModal(true);
@@ -141,8 +134,6 @@ export default function AddressBook() {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[500px] p-6 relative">
-        
-        {/* tb giới hạnd dịa chỉ */}
         {showLimitModal && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn">
                 <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl text-center relative">
@@ -156,8 +147,6 @@ export default function AddressBook() {
                 </div>
             </div>
         )}
-
-        {/* modal xn xóa*/}
         {showDeleteModal && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn">
                 <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl text-center relative">
@@ -174,8 +163,6 @@ export default function AddressBook() {
                 </div>
             </div>
         )}
-
-        {/* modal thêm sửa */}
         {showFormModal && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn">
                 <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
@@ -189,7 +176,6 @@ export default function AddressBook() {
                             <AlertCircle size={16}/> {error}
                         </div>
                     )}
-
                     <div className="space-y-4">
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Loại địa chỉ</label>
@@ -220,8 +206,6 @@ export default function AddressBook() {
                 </div>
             </div>
         )}
-
-        {/* giao diện*/}
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><MapPin className="text-blue-600"/> Sổ địa chỉ</h2>
             <button 

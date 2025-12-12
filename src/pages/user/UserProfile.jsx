@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Save, Edit3, User, Phone, Mail, CheckCircle, AlertCircle, X, Key, Loader2, AlertTriangle, Eye, EyeOff, Trash2, Info, Calendar, Shield, Hash, Activity, Cake } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-//api url
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_URL = `${API_BASE}/api/users`;
 
@@ -11,7 +10,6 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("view"); 
   const [isLoading, setIsLoading] = useState(true);
   
-  // state user và form
   const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
       full_name: "", phone: "", email: "", 
@@ -23,7 +21,7 @@ export default function UserProfile() {
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [notification, setNotification] = useState(null);
   
-  // state cho modal xóa tài khoản
+  // xóa tài khoản
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const showNotification = (message, type = "success") => {
@@ -31,20 +29,19 @@ export default function UserProfile() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  //ormat ngày cho input date (yyyy-mm--dd)
+  //(yyyy-mm--dd)
   const formatDateForInput = (isoString) => {
       if (!isoString) return "";
       const date = new Date(isoString);
       return date.toISOString().split('T')[0];
   };
 
-  // format ngày hiển thị (dd-mm-yyyy)
+  //ngày hiển thị 
   const formatDateDisplay = (isoString) => {
       if (!isoString) return "Chưa cập nhật";
       return new Date(isoString).toLocaleDateString('vi-VN');
   };
 
-  // data
   useEffect(() => {
     const fetchUserData = async () => {
         setIsLoading(true);
@@ -157,12 +154,12 @@ export default function UserProfile() {
               localStorage.removeItem("token");
               window.dispatchEvent(new Event("storage"));
               
-              // xóa tạm thời và cho tg đăng xuất
+              // xóa tạm thời và tg đăng xuất
               showNotification("Tài khoản đã xóa tạm thời. Đang đăng xuất...", "success");
 
               setTimeout(() => {
                   navigate("/login");
-              }, 3000); //3s chuyển ra login
+              }, 3000); //3s 
               
           } else {
               showNotification("Lỗi khi xóa tài khoản", "error");
@@ -245,8 +242,6 @@ export default function UserProfile() {
                                 {currentUser.email}
                             </div>
                         </div>
-                        
-                        {/* giới tính */}
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Info size={12}/> Giới tính</p>
                             <div className="flex items-center gap-2 text-gray-800 font-medium text-sm p-2.5 bg-gray-50/50 rounded-lg border border-gray-100">
@@ -256,8 +251,6 @@ export default function UserProfile() {
                                 {currentUser.gender || "Chưa cập nhật"}
                             </div>
                         </div>
-                        
-                        {/* ns */}
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Cake size={12}/> Ngày sinh</p>
                             <div className="text-gray-800 font-medium text-sm p-2.5 bg-gray-50/50 rounded-lg border border-gray-100">
@@ -300,8 +293,6 @@ export default function UserProfile() {
                                 <label className="text-xs font-bold text-gray-600">Số điện thoại</label>
                                 <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="w-full p-2.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"/>
                             </div>
-
-                            {/* nhập ngày sinh */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-bold text-gray-600">Ngày sinh</label>
                                 <input 
@@ -357,8 +348,6 @@ export default function UserProfile() {
                             <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition transform active:scale-95"><Save size={16}/> Lưu thay đổi</button>
                         </div>
                     </form>
-
-                    {/* xóa tk */}
                     <div className="mt-8 bg-red-50/50 rounded-xl p-5 border border-red-100 relative">
                         <h3 className="text-red-700 font-bold text-sm mb-1 flex items-center gap-2"><AlertCircle size={16}/> Xóa tài khoản</h3>
                         <p className="text-xs text-gray-500 mb-3 leading-relaxed">

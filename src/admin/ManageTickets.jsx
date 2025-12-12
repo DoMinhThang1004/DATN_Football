@@ -4,12 +4,11 @@ import {
   Plus, Tag, Edit, Trash2, X, Save, Loader2, AlertTriangle, CheckCircle 
 } from "lucide-react";
 
-// api
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_URL = `${API_BASE}/api/ticket-types`;
 
 export default function ManageTickets() {
-  // state quản lý
+  //quản lý
   const [types, setTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -48,7 +47,7 @@ export default function ManageTickets() {
     fetchTicketTypes();
   }, []);
 
-  // mở modal thêm mới
+  //thêm mới
   const handleAddNew = () => {
     setCurrentType(null);
     setFormData({ name: "", base_price: 0, color_code: "#3B82F6", description: "" });

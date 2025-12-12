@@ -7,7 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_URL = `${API_BASE}/api/dashboard/stats`;
 
-//card thống kê
+// thống kê
 const StatCard = ({ title, value, icon: Icon, color, bgColor, trend, isPositive, onClick }) => (
   <div 
     onClick={onClick}
@@ -39,13 +39,11 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  //phân trang và định dạng ngày
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; 
   const [currentDate] = useState(new Date());
   const formattedDate = new Intl.DateTimeFormat('vi-VN', { month: 'long', year: 'numeric' }).format(currentDate);
 
-  //dl
   useEffect(() => {
       const fetchStats = async () => {
           try {
@@ -61,11 +59,12 @@ const Dashboard = () => {
       fetchStats();
   }, []);
 
-  //login phan trang
+  //phân trang
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentOrders = stats?.recentOrders?.slice(indexOfFirstItem, indexOfLastItem) || [];
   const totalPages = Math.ceil((stats?.recentOrders?.length || 0) / itemsPerPage);
+
   const handlePageChange = (pageNumber) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
         setCurrentPage(pageNumber);
@@ -83,9 +82,10 @@ const Dashboard = () => {
       <div className="p-8 bg-gray-50 min-h-screen font-sans">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
-            <p className="text-gray-500 text-sm mt-1 font-medium">Tổng quan tình hình kinh doanh hôm nay.</p>
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Tổng quan</h1>
+            <p className="text-gray-500 text-sm mt-1 font-medium">Theo dõi tình hình kinh doanh hôm nay.</p>
           </div>
+          
           <div className="flex items-center bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm">
               <div className="flex items-center px-4 py-2 border-r border-gray-100">
                 <CalendarIcon size={18} className="text-blue-600 mr-2"/>
@@ -116,19 +116,18 @@ const Dashboard = () => {
                 icon={Users} color="text-purple-600" bgColor="bg-purple-100" trend="+5.3%" isPositive={true} 
                 onClick={() => navigate('/admin/manage-users')}/>
             <StatCard 
-                title="Tỉ lệ sân vận động sử dụng" 
-                value="78%" 
+                title="Sân Vận Động" 
+                value="Số lượng" 
                 icon={Activity} color="text-orange-600" bgColor="bg-orange-100" trend="-2.1%" isPositive={false} 
                 onClick={() => navigate('/admin/manage-stadiums')}/>
         </div>
-
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
           <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-8">
               <div>
                   <h2 className="text-lg font-bold text-gray-800">Biểu đồ doanh thu</h2>
-                  <p className="text-xs text-gray-400 mt-1 font-medium">Dữ liệu thực tế theo thời gian</p>
+                  <p className="text-xs text-gray-400 mt-1 font-medium">Dữ liệu thực tế 7 ngày gần nhất</p>
               </div>
               <button className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-50 rounded-lg transition"><MoreHorizontal size={20} /></button>
             </div>
@@ -146,16 +145,16 @@ const Dashboard = () => {
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} />
                   <Tooltip 
                       contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}} 
-                      formatter={(value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}/>
-                  <Area type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                      formatter={(value) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value), "Doanh thu"]}
+                      labelStyle={{fontWeight: 'bold', color: '#374151'}}/>
+                  <Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                 </AreaChart>
               </ResponsiveContainer>
               {(!stats?.revenueChart || stats.revenueChart.length === 0) && (
-                  <div className="flex justify-center items-center h-full -mt-60 text-gray-400 text-sm font-medium">Chưa có dữ liệu lịch sử</div>
+                  <div className="flex justify-center items-center h-full -mt-60 text-gray-400 text-sm font-medium">Chưa có dữ liệu giao dịch gần đây</div>
               )}
             </div>
           </div>
-
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
             <div className="mb-8">
                 <h2 className="text-lg font-bold text-gray-800">Vé bán theo ngày</h2>
@@ -166,8 +165,12 @@ const Dashboard = () => {
                 <BarChart data={stats?.revenueChart || []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6"/>
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9CA3AF'}} dy={5}/>
-                  <Tooltip cursor={{fill: '#F3F4F6'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}} />
-                  <Bar dataKey="tickets" fill="#F97316" radius={[6, 6, 0, 0]} barSize={40} />
+                  <Tooltip 
+                    cursor={{fill: '#F3F4F6'}} 
+                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'}} 
+                    formatter={(value) => [value, "Số lượng bán"]}
+                    labelStyle={{fontWeight: 'bold', color: '#374151'}}/>
+                  <Bar dataKey="tickets" name="Số lượng bán" fill="#F97316" radius={[6, 6, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
               {(!stats?.revenueChart || stats.revenueChart.length === 0) && (
@@ -176,13 +179,11 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <h2 className="text-lg font-bold text-gray-800">Đơn đặt vé gần đây</h2>
             <button onClick={() => navigate('/admin/manage-orders')} className="text-blue-600 text-sm font-bold hover:underline hover:text-blue-700 transition">Xem tất cả</button>
           </div>
-          
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -210,8 +211,7 @@ const Dashboard = () => {
                             <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm
                                 ${order.status === 'PAID' || order.status === 'SUCCESS' ? 'bg-green-50 text-green-700 border-green-100' : ''}
                                 ${order.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : ''}
-                                ${order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-100' : ''}
-                            `}>
+                                ${order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-100' : ''}`}>
                                 {order.status === 'PAID' ? 'Thành công' : order.status === 'PENDING' ? 'Chờ xử lý' : 'Đã hủy'}
                             </span>
                         </td>
@@ -224,7 +224,6 @@ const Dashboard = () => {
               </tbody>
             </table>
           </div>
-
           {totalPages > 1 && (
               <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50">
                   <span className="text-xs font-medium text-gray-500">
@@ -234,11 +233,9 @@ const Dashboard = () => {
                       <button 
                         onClick={() => handlePageChange(currentPage - 1)} 
                         disabled={currentPage === 1}
-                        className="p-2 border border-gray-300 bg-white text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-                      >
+                        className="p-2 border border-gray-300 bg-white text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm">
                           <ChevronLeft size={16}/>
                       </button>
-                      
                       {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
                           <button 
                             key={page} 
@@ -246,12 +243,10 @@ const Dashboard = () => {
                             className={`w-8 h-8 rounded-lg text-xs font-bold transition-all shadow-sm ${
                                 currentPage === page 
                                 ? 'bg-blue-600 text-white shadow-blue-200' 
-                                : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100'
-                            }`}>
+                                : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100' }`}>
                               {page}
                           </button>
                       ))}
-
                       <button 
                         onClick={() => handlePageChange(currentPage + 1)} 
                         disabled={currentPage === totalPages}

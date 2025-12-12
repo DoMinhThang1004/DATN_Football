@@ -11,17 +11,17 @@ export default function Header() {
   const location = useLocation(); 
   const { cartItems } = useCart();
   
-  //state quản lý user
+  //ql user
   const [user, setUser] = useState(null); 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false); 
   
-  // state tìm kiếm
+  //search
   const [keyword, setKeyword] = useState(""); 
 
   const dropdownRef = useRef(null);
 
-  // lấy data user
+  //data user
   useEffect(() => {
     const updateUserData = () => {
         const storedUser = localStorage.getItem("currentUser"); 
@@ -42,7 +42,6 @@ export default function Header() {
     navigate("/login");
   };
 
-  // đóng drop khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -68,7 +67,6 @@ export default function Header() {
           e.preventDefault();
           window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      // bất kì ở đâu click logo sẽ quay lại trang chủ
   };
 
   return (
@@ -123,7 +121,6 @@ export default function Header() {
             </Link>
 
             <div className="pl-6 border-l border-gray-700 flex items-center space-x-5">
-              {/* giỏ hàng */}
               <Link to="/cart" className="relative group p-2 hover:bg-gray-800 rounded-full transition-colors">
                  <ShoppingCart size={22} className={`transition-colors ${isActive('/cart') ? 'text-yellow-400 fill-current' : 'text-white group-hover:text-yellow-400'}`} /> 
                  {cartItems && cartItems.length > 0 && (
@@ -133,7 +130,6 @@ export default function Header() {
                  )}
               </Link>
 
-              {/*hồ sơ */}
               {user ? (
                   <div className="relative" ref={dropdownRef}>
                       <button 
@@ -155,8 +151,6 @@ export default function Header() {
                               <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-yellow-400' : ''}`}/>
                           </div>
                       </button>
-
-                      {/* drop menu */}
                       {isDropdownOpen && (
                           <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-gray-800 z-50 origin-top-right ring-1 ring-black/5">
                               <div className="p-5 border-b border-gray-100 bg-gray-50/50">
@@ -195,8 +189,6 @@ export default function Header() {
         </nav>
       </div>
     </header>
-
-    {/* Modal Logout */}
     {showLogoutModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center transform transition-all scale-100 border border-gray-100">

@@ -1,8 +1,6 @@
 const { GoogleGenAI } = require('@google/genai'); 
-
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }); 
 
-//khởi động lưu phiên người dùng và admin
 const userSessions = new Map(); 
 const activeAdmins = new Map();   
 
@@ -16,13 +14,12 @@ const {
     getTicketCancellationPolicy,
     saveChatMessage,
     getUserInfo 
-} = require('./dbQuerySocket'); 
+    } = require('./dbQuerySocket'); 
 
 module.exports = (io) => {
     
     io.on('connection', (socket) => {
-        //lấy id kh từ fontend gửi
-        //grontend gửi: io(URL, query: userId: ...
+        //lấy id kh 
         const queryUserId = socket.handshake.query.userId;
         const currentUserId = queryUserId || `anon_${socket.id}`;
 
@@ -43,19 +40,19 @@ module.exports = (io) => {
             userSessions.set(currentUserId, session);
         }
 
-        //admin kết nối
+        //ad kết nối
         socket.on('admin_connect', (adminData) => {
             activeAdmins.set(adminData.userId, socket.id);
             console.log(`Admin connected: ${adminData.userId}`);
 
-            //gửi lại ds đang chờ
+            //gửi lại ds chờ
             userSessions.forEach((session, uId) => {
                 if (session.mode === 'PENDING') {
                     socket.emit('new_live_request', { 
                         userId: uId, 
                         fullName: session.userInfo?.full_name || `Khách ${uId}`,
                         avatarUrl: session.userInfo?.avatar_url,
-                        message: `Khách hàng đang chờ hỗ trợ (Đồng bộ).`,
+                        message: `Khách hàng đang chờ hỗ trợ.`,
                         timestamp: new Date()
                     });
                 }
@@ -90,7 +87,7 @@ module.exports = (io) => {
         socket.on('send_ai_prompt', async (prompt) => {
             const userSession = userSessions.get(currentUserId);
             
-            // nếu chat tt thì gửi admin
+            //chat tt thì gửi ad
             if (userSession && userSession.mode === 'LIVE') {
                 if (userSession.agentSocketId) {
                      io.to(userSession.agentSocketId).emit('live_message_from_user', {
@@ -105,16 +102,16 @@ module.exports = (io) => {
                 return; 
             }
             
-            // yêu cầu chat vs ad
+            // yc chat vs ad
             const normalizedPrompt = prompt.toLowerCase();
             if (normalizedPrompt.includes('nhân viên') || normalizedPrompt.includes('hỗ trợ trực tiếp') || normalizedPrompt.includes('gặp người')) {
                 userSession.mode = 'PENDING';
                 
-                //lấy tt ng dùng chat
+                //lấy tt nd chat
                 let userName = `Khách ${currentUserId}`;
                 let userAvatar = null;
 
-                //nếu ko phải guest thì lấy tt
+                // ko phải guest, lấy tt
                 if (!String(currentUserId).startsWith('guest_')) {
                     const info = await getUserInfo(currentUserId);
                     if (info) {
@@ -150,13 +147,13 @@ module.exports = (io) => {
                 await saveChatMessage(currentUserId, 'user', prompt); 
 
                 const intentMap = [
-                    { keywords: ['giá vé', 'loại vé', 'mua vé', 'bao nhiêu tiền'], handler: getTicketPricingData },
+                    { keywords: ['giá vé', 'loại vé', 'mua vé như thế nào', 'bao nhiêu tiền'], handler: getTicketPricingData },
                     { keywords: ['trận đấu', 'lịch thi đấu', 'khi nào đá', 'sắp tới'], handler: getUpcomingMatches },
-                    { keywords: ['hủy vé', 'đổi vé', 'hoàn tiền'], handler: getTicketCancellationPolicy }, 
-                    { keywords: ['faq', 'hỏi đáp', 'thường gặp'], handler: getFaqData },
-                    { keywords: ['tài khoản', 'mật khẩu', 'quên', 'đăng nhập'], handler: getAccountAndPolicyFAQs },
-                    { keywords: ['sân', 'khu vực', 'chỗ ngồi', 'cửa'], handler: getStadiumAndZoneInfo },
-                    { keywords: ['thanh toán', 'chuyển khoản', 'visa', 'momo'], handler: getPaymentMethods },
+                    { keywords: ['cách hủy vé', 'đổi vé', 'hoàn tiền'], handler: getTicketCancellationPolicy }, 
+                    { keywords: ['faq', 'hỏi đáp', 'câu hỏi thường gặp'], handler: getFaqData },
+                    { keywords: ['tài khoản', 'mật khẩu', 'quên mật khẩu', 'đăng nhập'], handler: getAccountAndPolicyFAQs },
+                    { keywords: ['sân vận động', 'khu vực', 'chỗ ngồi', 'cửa'], handler: getStadiumAndZoneInfo },
+                    { keywords: ['thanh toán như thế nào', 'có huyển khoản không', 'vnpay', 'momo'], handler: getPaymentMethods },
                 ];
 
                 let contextData = null;
@@ -183,7 +180,7 @@ module.exports = (io) => {
             } catch (error) {
                 console.error("AI Error:", error);
                 let msg = "Lỗi hệ thống AI.";
-                if (error.status === 429) msg = "Hệ thống đang bận (Quota limit). Vui lòng thử lại sau.";
+                if (error.status === 429) msg = "Hệ thống đang bận. Vui lòng thử lại sau.";
                 socket.emit('ai_error', msg);
             }
         });

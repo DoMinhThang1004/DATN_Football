@@ -1,9 +1,8 @@
 const pool = require('../db');
 
-//lấy danh sách FAQ
 const getFaqs = async (req, res) => {
     try {
-        //truy vấn tất cả fqa từ dl
+        //truy vấn all
         const result = await pool.query("SELECT id, question, answer FROM faqs ORDER BY id ASC");
         res.json(result.rows);
     } catch (err) {

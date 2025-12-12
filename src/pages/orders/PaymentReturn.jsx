@@ -8,7 +8,7 @@ import emailjs from '@emailjs/browser';
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_BASE = `${API_HOST}/api`;
 
-//cấu hình emailjs
+//emailjs
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const TICKET_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TICKET_TEMPLATE_ID; 
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY; 
@@ -18,14 +18,14 @@ const [searchParams] = useSearchParams();
 const [status, setStatus] = useState("loading"); 
 const [orderResult, setOrderResult] = useState(null);
 
- // chặn ngăn gọi API 2 lần
+ // đang bị lỗi gọi api lưu 2 đơn hàng giống nhau, đang xử lý chặn ngăn gọi API 2 lần
 const isRunRef = useRef(false);
 
     useEffect(() => {
     const verifyPayment = async () => {
     // nếu chạy tt r thì return
     if (isRunRef.current === true) return;
-    isRunRef.current = true; //dánh dấu đã chạy
+    isRunRef.current = true;
 
         try {
     const queryString = searchParams.toString();
@@ -40,28 +40,25 @@ const isRunRef = useRef(false);
         }
 
     const res = await fetch(apiUrl);
-        //kiểm tra http status trc khi chạy
+        //check http status khi chạy
             if (!res.ok) { 
-                //dừng và báo lỗi
+                //dừng và tb lỗi
     const errorData = await res.json().catch(() => ({ message: "Lỗi không xác định từ Server." }));
                 throw new Error(`Giao dịch thất bại: ${errorData.message || res.statusText}`);
             }
 
     const data = await res.json(); 
-    // chạy trạng thái 
             if (data.code === "00" || data.message?.includes("đã thành công") || data.message?.includes("confirmed")) { 
     
     const orderId = data.orderId || searchParams.get('vnp_TxnRef');
     let successfulOrderLoad = false;
     
-    // --- BẮT ĐẦU: KHỐI TẢI CHI TIẾT ĐƠN HÀNG (CẦN CÔ LẬP) ---
     try {
         const orderRes = await fetch(`${API_BASE}/orders/${orderId}`);
         
         if (orderRes.ok) {
             const orderData = await orderRes.json();
             
-            // logoc gửi vé về mail
             try {
                 // all thông tin
                 const firstTicket = orderData.tickets[0];
@@ -84,7 +81,7 @@ const isRunRef = useRef(false);
                 console.error("Lỗi logic email:", emailErr);
             }
 
-            // fdormat dữ liệu hiển thị hóa đơn (giữ nguyên)
+            // format dl hiển thị hóa đơn
             const formattedResult = {
                 orderId: orderData.id, totalAmount: Number(orderData.total_amount),
                 paymentMethod: orderData.payment_method === 'MOMO' ? 'Ví MoMo' : 'VNPAY', deliveryMethod: "eticket", 
@@ -96,33 +93,30 @@ const isRunRef = useRef(false);
             };
             
             setOrderResult(formattedResult);
-            successfulOrderLoad = true; // Đánh dấu thành công
+            successfulOrderLoad = true;
             
         } else {
-            // lỗi  http từ api hay đơn hàng
+            // lỗi http từ api hay đh
             console.error("Lỗi HTTP khi tải chi tiết đơn hàng:", orderRes.status);
-            // successfulOrderLoad vẫn là false
         }
     } catch (orderError) {
-        // lỗi mạng hay json khi tải chi tiết đơn hàng
+        // lỗi mạng, json khi tải ct dh
         console.error("Lỗi mạng/JSON khi tải chi tiết đơn hàng:", orderError);
-        // successfulOrderLoad vẫn là false
     }
     
-    // status hiển thị
+    // status 
     if (successfulOrderLoad) {
-        setStatus("success"); // hiển thị chi tiết vé
+        setStatus("success"); // hiển thị ct vé
     } else {
-        setStatus("success_no_data"); // chạy lên thành công nhưng không tải được chi tiết
+        setStatus("success_no_data"); 
     }
 
     } else {
-        // k chạy nx vì đã xử lý lỗi (lỗi trả về từ Backend)
         setStatus("failed");
     }          
         } catch (error) {
             console.error("Lỗi xác thực giao dịch:", error);
-            setStatus("failed"); // // hiển thị giao dịch thất bại
+            setStatus("failed"); // // hiển thị gd thất bại
         }
     };
         if (searchParams.toString()) {
@@ -144,8 +138,6 @@ const isRunRef = useRef(false);
 
             {status === "success" && orderResult && (
                 <div className="w-full max-w-4xl animate-in fade-in zoom-in duration-500">
-                     
-                     {/* tb vé gửi mail*/}
                      <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-center max-w-lg mx-auto shadow-sm">
                         <p className="text-green-800 font-bold flex items-center justify-center gap-2 text-lg">
                             <CheckCircle size={24} className="text-green-600"/> 
@@ -153,8 +145,6 @@ const isRunRef = useRef(false);
                         </p>
                         <p className="text-green-600 text-sm mt-1">Vui lòng kiểm tra hộp thư (cả mục Spam/Rác) để nhận vé.</p>
                     </div>
-
-                     {/* chi tiết hóa đơn */}
                      <InvoiceModal orderResult={orderResult} />
                      
                      <div className="text-center mt-8">

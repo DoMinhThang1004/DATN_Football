@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, MapPin, Clock, Calendar, QrCode, Download, CheckCircle, Ticket } from "lucide-react";
+import { X, MapPin, Clock, Calendar, QrCode, CheckCircle, Ticket } from "lucide-react";
 import QRCode from "react-qr-code";
 
 const API_HOST = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -7,10 +7,10 @@ const API_BASE = `${API_HOST}/api`;
 
 export default function OrderDetailModal({ orderId, onClose }) {
   const [orderDetail, setOrderDetail] = useState(null);
-  const [selectedTicket, setSelectedTicket] = useState(null); //vé đang đc xem QR
+  const [selectedTicket, setSelectedTicket] = useState(null); //vé đang QR
   const [loading, setLoading] = useState(true);
 
-  //dl chi tiết vé và đơn hàng
+  //dl ct vé và dh
   useEffect(() => {
     const fetchDetail = async () => {
       try {
@@ -47,7 +47,6 @@ export default function OrderDetailModal({ orderId, onClose }) {
             </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition"><X size={20} className="text-gray-500"/></button>
         </div>
-
         <div className="flex-1 overflow-y-auto p-6">
             {loading ? (
                 <p className="text-center py-10 text-gray-500">Đang tải thông tin vé...</p>
@@ -64,7 +63,7 @@ export default function OrderDetailModal({ orderId, onClose }) {
                         {orderDetail.tickets && orderDetail.tickets.map((ticket, idx) => (
                             <div 
                                 key={idx} 
-                                onClick={() => setSelectedTicket(ticket)} //bấm để xem qr
+                                onClick={() => setSelectedTicket(ticket)} // xem qr
                                 className="border border-gray-200 rounded-xl p-4 hover:border-blue-400 hover:shadow-md transition cursor-pointer bg-white group">
                                 <div className="flex justify-between items-start">
                                     <div>
@@ -92,8 +91,6 @@ export default function OrderDetailModal({ orderId, onClose }) {
                 <p className="text-center text-red-500">Không tìm thấy dữ liệu.</p>
             )}
         </div>
-
-        {/* model con xem qr của 1 vé*/}
         {selectedTicket && (
             <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-in zoom-in-95 duration-200">
                 <button onClick={(e) => { e.stopPropagation(); setSelectedTicket(null); }} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200"><X size={24}/></button>
@@ -105,12 +102,6 @@ export default function OrderDetailModal({ orderId, onClose }) {
                     <p className="font-mono text-gray-500 text-sm">{selectedTicket.qr_code_string || selectedTicket.id}</p>
                     <p className="text-sm text-gray-600">Vui lòng đưa mã này cho nhân viên soát vé.</p>
                 </div>
-                {selectedTicket.status === 'VALID' && (
-                    <button className="mt-8 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-black transition">
-                        <Download size={18}/>
-                         Lưu ảnh vé
-                    </button>
-                )}
             </div>
         )}
 

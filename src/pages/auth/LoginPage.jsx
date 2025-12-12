@@ -4,18 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout.jsx";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// api đăng nhập
 const LOGIN_API = `${API_BASE}/api/users/login`;
-
-// url ản
 const BANNER_IMG = `${API_BASE}/uploads/banner-1.jpg`;
 
 
 export default function LoginPage() {
   const navigate = useNavigate();
   
-  // state
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
@@ -52,7 +47,7 @@ export default function LoginPage() {
             throw new Error(data.message || "Đăng nhập thất bại");
         }
 
-        // lưu ttuser vào localStorage
+        // lưu ttuser vào local
         localStorage.setItem("currentUser", JSON.stringify(data.user));
         
         setIsLoginSuccess(true);
@@ -113,8 +108,6 @@ export default function LoginPage() {
                     <div>
                         <div className="flex justify-between items-center mb-1.5">
                             <label className="block text-sm font-bold text-gray-700">Mật khẩu</label>
-                            
-                            {/* chuyển tới đổi pass */}
                             <Link to="/forgot-password" className="text-sm font-semibold text-blue-600 hover:underline">
                                 Quên mật khẩu?
                             </Link>
@@ -152,12 +145,10 @@ export default function LoginPage() {
                     
                     <div className="mt-4 grid grid-cols-2 gap-4">
                         <button className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-bold text-gray-700 shadow-sm group">
-                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="google"/>
-                            Google
+                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="google"/>Google
                         </button>
                         <button className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-bold text-gray-700 shadow-sm group">
-                             <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" className="w-5 h-5" alt="facebook"/>
-                            Facebook
+                             <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" className="w-5 h-5" alt="facebook"/>Facebook
                         </button>
                     </div>
 

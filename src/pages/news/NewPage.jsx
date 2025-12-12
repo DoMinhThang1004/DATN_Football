@@ -3,17 +3,15 @@ import { Search, Clock, User, MessageSquare, Flame, Tag, Filter, ArrowRight, Ext
 import UserLayout from "../../layouts/UserLayout.jsx";
 import { Link } from "react-router-dom";
 
-// api url
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_NEWS = `${API_BASE}/api/news`;
 
 export default function NewsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
-    const [newsData, setNewsData] = useState([]); //chứ toàn bộ dl api
+    const [newsData, setNewsData] = useState([]); 
     const [error, setError] = useState(null);
 
-    // logic xử lý gọi api
     useEffect(() => {
         fetch(API_NEWS)
             .then(res => {
@@ -21,7 +19,7 @@ export default function NewsPage() {
                 return res.json();
             })
             .then(data => {
-                setNewsData(data); // data đã được sắp xếp theo ngày 
+                setNewsData(data); 
                 setLoading(false);
             })
             .catch(err => {
@@ -31,27 +29,24 @@ export default function NewsPage() {
             });
     }, []);
 
-    // hàm format ngày 
     const formatDate = (dateString) => {
         const options = { day: 'numeric', month: 'numeric', year: 'numeric' };
         return new Date(dateString).toLocaleDateString('vi-VN', options);
     };
 
-    // phân chia dl
-    const featuredNews = newsData[0] || null; // tin nổi bật lớn 
-    const subFeaturedNews = newsData.slice(1, 3); // 2 tin nhỏ bên cạnh
-    const latestNews = newsData.slice(3); // các tin còn lại cho dschính
+    //chia dl
+    const featuredNews = newsData[0] || null; 
+    const subFeaturedNews = newsData.slice(1, 3); 
+    const latestNews = newsData.slice(3); 
     
     const hasNews = newsData.length > 0;
     
-    // dl mock
     const mockTrending = [
         { id: 1, title: "BXH FIFA tháng 12: Việt Nam trở lại Top 100", link: "#" },
         { id: 2, title: "Lịch thi đấu V-League vòng 8: Đại chiến Hàng Đẫy", link: "#" },
         { id: 3, title: "Kết quả bốc thăm chia bảng SEA Games 33", link: "#" },
     ];
-    
-    // render
+
     return (
         <UserLayout>
             <div className="bg-gray-50 min-h-screen pb-16 font-sans">
@@ -93,8 +88,6 @@ export default function NewsPage() {
                         <>
                             <section className="mb-12">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    
-                                    {/* tin lớn bên trái */}
                                     {featuredNews && (
                                         <Link to={`/news/${featuredNews.id}`} className="group relative h-96 md:h-[500px] rounded-2xl overflow-hidden cursor-pointer shadow-lg block">
                                             <img src={featuredNews.image_url || 'https://via.placeholder.com/1200x800?text=Featured'} alt="Main News" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
@@ -114,8 +107,6 @@ export default function NewsPage() {
                                             </div>
                                         </Link>
                                     )}
-
-                                    {/* 2 tin nhỏ bên phải  */}
                                     <div className="flex flex-col gap-6">
                                         {subFeaturedNews.map((news) => (
                                             <Link to={`/news/${news.id}`} key={news.id} className="group relative h-48 md:h-[238px] rounded-2xl overflow-hidden cursor-pointer shadow-md block">
@@ -137,7 +128,6 @@ export default function NewsPage() {
                             </section>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                                {/* ds tin tức*/}
                                 <div className="lg:col-span-2">
                                     <div className="flex items-center justify-between mb-6 pb-2 border-b border-gray-200">
                                         <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -185,15 +175,12 @@ export default function NewsPage() {
                                         </button>
                                     </div>
                                 </div>
-
-                                {/* giữ vs mock data ở trên */}
                                 <aside className="space-y-8">
                                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:sticky lg:top-24">
                                         <h4 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
                                             <TrendingUp size={20} className="text-red-500"/> Xu hướng đọc
                                         </h4>
                                         <ul className="space-y-4">
-                                            {/* tạm thời dùng mock data */}
                                             {mockTrending.map((item, idx) => (
                                                 <li key={item.id}>
                                                     <a href={item.link} target="_blank" rel="noopener noreferrer" className="flex gap-3 group">
@@ -208,14 +195,11 @@ export default function NewsPage() {
                                             ))}
                                         </ul>
                                     </div>
-
-                                    {/* dùng Mock Data vì API chưa có */}
                                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                         <h4 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
                                             <Tag size={20} className="text-blue-500"/> Chủ đề HOT
                                         </h4>
                                         <div className="flex flex-wrap gap-2">
-                                            {/* giả lập categories */}
                                             {["V-League", "Đội tuyển VN", "AFF Cup", "Chuyển nhượng"].map((cat, idx) => (
                                                 <span 
                                                     key={idx} 

@@ -1,7 +1,6 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// kb local
 const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -12,7 +11,6 @@ const pool = new Pool({
 
 pool.connect((err) => {
   if (err) {
-    // tb
     console.error('Lỗi kết nối PostgreSQL:', err.message);
   } else {
     console.log('Đã kết nối thành công đến PostgreSQL');

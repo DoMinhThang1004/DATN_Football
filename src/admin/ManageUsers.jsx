@@ -10,7 +10,7 @@ const API_URL = `${API_BASE}/api/users`;
 const UPLOAD_URL = `${API_BASE}/api/upload`;
 
 export default function ManageUsers() {
-  // State quản lý
+  // quản lý
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -25,7 +25,7 @@ export default function ManageUsers() {
   const [notification, setNotification] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  //state kiểu xóa
+  //kiểu xóa
   const [deleteType, setDeleteType] = useState("soft"); // 'soft' | 'hard'
 
   const [formData, setFormData] = useState({
@@ -97,7 +97,6 @@ export default function ManageUsers() {
             //xóa vĩnh viễn
             apiUrl = `${API_URL}/${userToDelete.id}/permanent`;
         } 
-        // mặc định là xóa id, else xóa mềm
 
         const body = (method === 'PUT') ? JSON.stringify({ ...userToDelete, status: 'ACTIVE' }) : null;
 
@@ -186,8 +185,6 @@ export default function ManageUsers() {
             </div>
         )}
       </div>
-
-      {/*xác nhận xóa, khôi phục */}
       {deleteModalOpen && userToDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">

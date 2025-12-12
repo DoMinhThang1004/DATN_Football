@@ -6,12 +6,12 @@ import FloatingButtons from '../components/user/FloatingButtons.jsx';
 import ChatBox from '../components/support_user/ChatBox'; 
 
 export default function UserLayout({ children }) {
-  // lấy tt user để truyền bào chat
+  // lấy tt user cho chat
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    // ấy thông tin user đã đn từ localStorage
-    // lưu key là currentUser khi đăng nhập thành công
+    // lấy tt user đã đn từ local
+    // lưu key khi đn 
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
@@ -22,7 +22,7 @@ export default function UserLayout({ children }) {
     }
   }, []);
 
-  // chuẩn bị dữ liệu props
+  // cb dl props
   const userId = currentUser?.id || null;
   const userName = currentUser?.full_name || "Quý Khách";
 

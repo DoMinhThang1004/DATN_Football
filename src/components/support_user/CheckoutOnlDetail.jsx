@@ -5,12 +5,10 @@ import { Link } from "react-router-dom";
 export default function InvoiceModal({ orderResult }) {
   if (!orderResult) return null;
 
-  //copy
   const copyToClipboard = (text) => {
       navigator.clipboard.writeText(text);
       alert("Đã sao chép số tài khoản!");
   };
-
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 mt-8 animate-fadeIn">
@@ -29,8 +27,6 @@ export default function InvoiceModal({ orderResult }) {
         </div>
 
         <div className="p-8">
-            
-            {/* thông tin ck (vnpay/momo) */}
             {(orderResult.paymentMethod === 'BANK_QR' || orderResult.paymentMethod === 'MOMO') && (
                 <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100">
                     <h3 className="font-bold text-blue-800 text-lg mb-4 flex items-center gap-2">
@@ -59,8 +55,6 @@ export default function InvoiceModal({ orderResult }) {
                     </div>
                 </div>
             )}
-
-            {/* tt khách hàng */}
             <div className="mb-8">
                 <h3 className="font-bold text-gray-800 border-b border-gray-900 pb-2 mb-4 flex items-center gap-2">
                     <Edit2 size={18}/> Thông tin khách hàng
@@ -93,8 +87,6 @@ export default function InvoiceModal({ orderResult }) {
                     )}
                 </div>
             </div>
-
-            {/* chi tiết vé */}
             <div className="mb-8">
                 <h3 className="font-bold text-gray-800 border-b border-gray-800 pb-2 mb-4 flex items-center gap-2">
                     <Ticket size={18}/> Chi tiết vé đã mua
