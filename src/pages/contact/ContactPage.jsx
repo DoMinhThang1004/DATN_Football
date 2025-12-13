@@ -40,7 +40,7 @@ export default function ContactPage() {
       <div className="bg-gray-50 min-h-screen py-12">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Liên hệ với chúng tôi</h2>
+            <h3 className="text-4xl font-bold text-gray-900 mb-4">Liên hệ với chúng tôi</h3>
             <p className="text-gray-500 max-w-2xl mx-auto">Chúng tôi luôn sẵn sàng lắng nghe bạn.</p>
             
             <p className="text-gray-500 mt-2 text-sm">
@@ -61,7 +61,7 @@ export default function ContactPage() {
                     <div className="space-y-6">
                         <div className="flex items-start gap-4">
                             <div className="bg-white/20 p-3 rounded-lg"><MapPin size={20} /></div>
-                            <div><p className="font-bold text-blue-200 text-xs uppercase mb-1">Địa chỉ</p><p className="text-sm">Số 1 Phạm Hùng, Hà Nội</p></div>
+                            <div><p className="font-bold text-blue-200 text-xs uppercase mb-1">Địa chỉ</p><p className="text-sm">354, Cách Mạng Tháng 8, Tp.HCM</p></div>
                         </div>
                         <div className="flex items-start gap-4">
                             <div className="bg-white/20 p-3 rounded-lg"><Phone size={20} /></div>
@@ -69,7 +69,7 @@ export default function ContactPage() {
                         </div>
                         <div className="flex items-start gap-4">
                             <div className="bg-white/20 p-3 rounded-lg"><Mail size={20} /></div>
-                            <div><p className="font-bold text-blue-200 text-xs uppercase mb-1">Email</p><p className="text-sm">hotro@bongdaticket.vn</p></div>
+                            <div><p className="font-bold text-blue-200 text-xs uppercase mb-1">Email</p><p className="text-sm">suppport@bongdaticket.vn</p></div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +108,7 @@ export default function ContactPage() {
                         <textarea rows="4" name="message" value={formData.message} onChange={handleChange} placeholder="Chi tiết..." className={`w-full px-4 py-3 rounded-lg bg-gray-50 border outline-none ${errors.message ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-blue-500'}`}></textarea>
                          {errors.message && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12}/> {errors.message}</p>}
                     </div>
-                    <button type="submit" className="bg-red-600 text-black px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-lg transform active:scale-95"><Send size={18}/> Gửi ngay</button>
+                    <button type="submit" className="bg-yellow-200 text-black px-8 py-3 rounded-xl font-bold hover:bg-yellow-400 transition flex items-center gap-2 shadow-lg transform active:scale-95"><Send size={18}/> Gửi ngay</button>
                 </form>
             </div>
           </div>
