@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../layouts/AdminLayout.jsx";
-import {  Plus, Search, Edit, Trash2, X, Save, Loader2,AlertTriangle, CheckCircle, Filter, Lock, Shield, User, UploadCloud, RefreshCcw } from "lucide-react";
-import { useNavigate } from "react-router-dom"; 
+import {  Plus, Search, Edit, Trash2, X, Save, Loader2, 
+  AlertTriangle, CheckCircle, Filter, Lock, Shield, User, UploadCloud, RefreshCcw, Calendar, Info} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000"; 
-const API_URL = `${API_BASE}/api/users`; 
-const UPLOAD_URL = `${API_BASE}/api/upload`;
+const API_URL = "http://localhost:5000/api/users";
+const UPLOAD_URL = "http://localhost:5000/api/upload";
 
 export default function ManageUsers() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +18,7 @@ export default function ManageUsers() {
   const [statusFilter, setStatusFilter] = useState("ALL"); 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [notification, setNotification] = useState(null);
@@ -27,7 +27,9 @@ export default function ManageUsers() {
   const [deleteType, setDeleteType] = useState("soft"); 
 
   const [formData, setFormData] = useState({
-    full_name: "", email: "", phone: "", role: "USER", status: "ACTIVE", password: "", avatar_url: ""
+    full_name: "", email: "", phone: "", 
+    role: "USER", status: "ACTIVE", password: "", avatar_url: "",
+    gender: "Nam", birth_date: "" 
   });
   
   const showNotification = (message, type = "success") => {
@@ -46,18 +48,12 @@ export default function ManageUsers() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(API_URL, {
-          method: "GET",
-          headers: getAuthHeaders()
-      });
-
-      //nếu chưa đn hay k phải ad
+      const res = await fetch(API_URL, { method: "GET", headers: getAuthHeaders() });
       if (res.status === 401 || res.status === 403) {
           showNotification("Phiên đăng nhập hết hạn hoặc không đủ quyền!", "error");
           navigate("/login");
           return;
       }
-
       const data = await res.json();
       setUsers(data);
     } catch (error) {
@@ -67,11 +63,40 @@ export default function ManageUsers() {
       setIsLoading(false);
     }
   };
-
   useEffect(() => { fetchUsers(); }, []);
 
-  const handleAddNew = () => { setCurrentUser(null); setFormData({ full_name: "", email: "", phone: "", role: "USER", status: "ACTIVE", password: "", avatar_url: "" }); setIsModalOpen(true); };
-  const handleEdit = (user) => { setCurrentUser(user); setFormData({ full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, status: user.status, avatar_url: user.avatar_url || "", password: "" }); setIsModalOpen(true); };
+  const handleAddNew = () => { 
+      setCurrentUser(null); 
+      setFormData({ 
+          full_name: "", email: "", phone: "", 
+          role: "USER", status: "ACTIVE", password: "", avatar_url: "",
+          gender: "Nam", birth_date: ""
+      }); 
+      setIsModalOpen(true); 
+  };
+
+  const handleEdit = (user) => { 
+      setCurrentUser(user); 
+      
+      //định dạng ngày sinh
+      let bDate = "";
+      if (user.birth_date) {
+          bDate = new Date(user.birth_date).toISOString().split('T')[0];
+      }
+
+      setFormData({ 
+          full_name: user.full_name, 
+          email: user.email, 
+          phone: user.phone, 
+          role: user.role, 
+          status: user.status, 
+          avatar_url: user.avatar_url || "", 
+          password: "", 
+          gender: user.gender || "Nam",
+          birth_date: bDate
+      }); 
+      setIsModalOpen(true); 
+  };
   
   const handleFileChange = async (e) => { 
       const file = e.target.files[0]; if (!file) return; setIsUploading(true);
@@ -95,42 +120,46 @@ export default function ManageUsers() {
         if (currentUser) {
             response = await fetch(`${API_URL}/${currentUser.id}`, { 
                 method: 'PUT', 
-                headers: getAuthHeaders(),
+                headers: getAuthHeaders(), 
                 body: JSON.stringify(formData) 
             });
         } else {
             response = await fetch(API_URL, { 
                 method: 'POST', 
-                headers: getAuthHeaders(),
+                headers: getAuthHeaders(), 
                 body: JSON.stringify(formData) 
             });
         }
 
-        if (response.ok) { showNotification(currentUser ? "Cập nhật thành công!" : "Thêm mới thành công!"); fetchUsers(); setIsModalOpen(false); } 
-        else { const err = await response.json(); showNotification(err.message || "Lỗi lưu dữ liệu", "error"); }
+        if (response.ok) { 
+            showNotification(currentUser ? "Cập nhật thành công!" : "Thêm mới thành công!"); 
+            fetchUsers(); 
+            setIsModalOpen(false); 
+        } 
+        else { 
+            const err = await response.json(); 
+            showNotification(err.message || "Lỗi lưu dữ liệu", "error"); 
+        }
     } catch (error) { showNotification("Lỗi kết nối!", "error"); }
   };
 
-  const confirmDelete = (user) => {
-    setUserToDelete(user);
-    setDeleteType("soft");
-    setDeleteModalOpen(true);
-  };
+  const confirmDelete = (user) => { setUserToDelete(user); setDeleteType("soft"); setDeleteModalOpen(true); };
 
   const handleDeleteExecute = async () => {
     if (!userToDelete) return;
-    
     try {
         let apiUrl = `${API_URL}/${userToDelete.id}`;
         let method = 'DELETE';
+        let body = null;
+
         if (userToDelete.status === 'DELETED' && deleteType === 'restore') {
             apiUrl = `${API_URL}/${userToDelete.id}`;
             method = 'PUT'; 
+            body = JSON.stringify({ ...userToDelete, status: 'ACTIVE' }); //set active
         } else if (deleteType === 'hard') {
             apiUrl = `${API_URL}/${userToDelete.id}/permanent`;
         } 
 
-        const body = (method === 'PUT') ? JSON.stringify({ ...userToDelete, status: 'ACTIVE' }) : null;
         const res = await fetch(apiUrl, {
             method: method,
             headers: getAuthHeaders(),
@@ -138,11 +167,7 @@ export default function ManageUsers() {
         });
 
         if (res.ok) {
-            showNotification(
-                deleteType === 'restore' ? "Đã khôi phục tài khoản!" : 
-                deleteType === 'hard' ? "Đã xóa vĩnh viễn dữ liệu!" : 
-                "Đã xóa tạm thời (Soft Delete)!"
-            );
+            showNotification(deleteType === 'restore' ? "Đã khôi phục!" : "Đã xóa thành công!");
             fetchUsers();
         } else {
             const err = await res.json();
@@ -175,9 +200,8 @@ export default function ManageUsers() {
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div><h1 className="text-2xl font-bold text-gray-800">Quản lý Người dùng</h1><p className="text-gray-500 text-sm">Quản lý tài khoản Admin, Nhân viên và Khách hàng.</p></div>
-          <button onClick={handleAddNew} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm"><Plus size={20} /><span>Thêm tài khoản</span></button>
+          <button onClick={handleAddNew} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 shadow-sm"><Plus size={20} /><span>Thêm tài khoản</span></button>
         </div>
-
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} /><input type="text" placeholder="Tìm tên, email..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
             <div className="flex gap-3">
@@ -185,7 +209,6 @@ export default function ManageUsers() {
                 <div className="relative"><select className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-3 pr-8 rounded-lg cursor-pointer" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="ALL">Tất cả trạng thái</option><option value="ACTIVE">Hoạt động</option><option value="BANNED">Đã khóa</option><option value="DELETED">Đã xóa</option></select><Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/></div>
             </div>
         </div>
-
         {isLoading ? <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-100"><Loader2 className="animate-spin text-blue-600" size={40} /></div> : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full text-left border-collapse">
@@ -231,16 +254,14 @@ export default function ManageUsers() {
                     <div className="bg-gray-50 p-3 rounded-lg mb-4 text-left text-sm border border-gray-200">
                         <label className="flex items-start gap-3 cursor-pointer mb-3">
                             <input type="radio" name="delType" checked={deleteType === 'soft'} onChange={() => setDeleteType('soft')} className="mt-1"/>
-                            <div><span className="font-bold block">Xóa tạm thời (Khuyên dùng)</span><span className="text-xs text-gray-500">Chuyển trạng thái sang DELETED. Giữ lại lịch sử.</span></div>
+                            <div><span className="font-bold block">Xóa tạm thời (Khuyên dùng)</span><span className="text-xs text-gray-500">Chuyển trạng thái sang DELETED. Giữ lại lịch sử đơn hàng, vé.</span></div>
                         </label>
                         <label className="flex items-start gap-3 cursor-pointer">
                             <input type="radio" name="delType" checked={deleteType === 'hard'} onChange={() => setDeleteType('hard')} className="mt-1 accent-red-600"/>
-                            <div><span className="font-bold block text-red-600">Xóa vĩnh viễn</span><span className="text-xs text-gray-500">Xóa sạch mọi dữ liệu liên quan. Không thể khôi phục.</span></div>
+                            <div><span className="font-bold block text-red-600">Xóa vĩnh viễn</span><span className="text-xs text-gray-500">Xóa sạch tài khoản và mọi dữ liệu liên quan. Không thể khôi phục.</span></div>
                         </label>
                     </div>
                 )}
-
-                <p className="text-gray-600 mb-6 text-sm">Tài khoản: <strong>{userToDelete.email}</strong></p>
                 <div className="flex gap-3 justify-center">
                     <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Hủy</button>
                     <button onClick={handleDeleteExecute} className={`px-4 py-2 text-white rounded-lg ${deleteType === 'restore' ? 'bg-green-600 hover:bg-green-700' : deleteType === 'hard' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700'}`}>
@@ -255,33 +276,74 @@ export default function ManageUsers() {
            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                       <h3 className="text-lg font-bold text-gray-800">{currentUser ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}</h3>
+                       <h3 className="text-lg font-bold text-gray-800">{currentUser ? "Cập nhật quyền hạn" : "Thêm tài khoản mới"}</h3>
                        <button onClick={() => setIsModalOpen(false)}><X size={20} className="text-gray-400 hover:text-gray-600"/></button>
                    </div>
                    <form onSubmit={handleSave}>
                        <div className="p-6 space-y-4">
                            <div className="flex justify-center">
-                               <label className="relative w-24 h-24 rounded-full border-2 border-gray-300 border-dashed cursor-pointer bg-gray-50 hover:bg-gray-100 overflow-hidden group">
+                               <label className={`relative w-24 h-24 rounded-full border-2 border-gray-300 border-dashed ${!currentUser ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed'} bg-gray-50 overflow-hidden group`}>
                                    {isUploading ? <div className="absolute inset-0 flex items-center justify-center bg-white/80"><Loader2 className="animate-spin text-blue-500"/></div> : (formData.avatar_url ? <img src={formData.avatar_url} alt="" className="w-full h-full object-cover"/> : <div className="flex flex-col items-center justify-center h-full text-gray-400"><UploadCloud size={24}/><span className="text-[10px] mt-1">Upload</span></div>)}
-                                   <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                   <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} disabled={!!currentUser} />
                                </label>
                            </div>
+
                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label><input type="text" required className="w-full border rounded-lg px-3 py-2" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} /></div>
-                                <div><label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label><input type="text" className="w-full border rounded-lg px-3 py-2" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} /></div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                                    <input type="text" required className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-100 disabled:text-gray-500" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} disabled={!!currentUser} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                                    <input type="text" className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-100 disabled:text-gray-500" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} disabled={!!currentUser} />
+                                </div>
                            </div>
-                           <div><label className="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" required disabled={currentUser !== null} className={`w-full border rounded-lg px-3 py-2 ${currentUser ? 'bg-gray-100' : ''}`} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} /></div>
-                           {!currentUser && (
-                               <div><label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label><input type="password" required className="w-full border rounded-lg px-3 py-2" placeholder="Nhập mật khẩu..." value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} /></div>
-                           )}
+                           <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" required className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-100 disabled:text-gray-500" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} disabled={!!currentUser} />
+                           </div>
                            <div className="grid grid-cols-2 gap-4">
-                               <div><label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label><select className="w-full border rounded-lg px-3 py-2" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}><option value="USER">Khách hàng</option><option value="STAFF">Nhân viên</option><option value="ADMIN">Quản trị</option></select></div>
-                               <div><label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label><select className="w-full border rounded-lg px-3 py-2" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}><option value="ACTIVE">Hoạt động</option><option value="BANNED">Khóa tài khoản</option><option value="DELETED">Đã xóa</option></select></div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
+                                    <input type="date" className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-100 disabled:text-gray-500" value={formData.birth_date} onChange={(e) => setFormData({...formData, birth_date: e.target.value})} disabled={!!currentUser} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                                    <select className="w-full border rounded-lg px-3 py-2 disabled:bg-gray-100 disabled:text-gray-500" value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})} disabled={!!currentUser}>
+                                        <option value="Nam">Nam</option>
+                                        <option value="Nữ">Nữ</option>
+                                        <option value="Khác">Khác</option>
+                                    </select>
+                                </div>
+                           </div>
+                           {!currentUser && (
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                                   <input type="password" required className="w-full border rounded-lg px-3 py-2" placeholder="Nhập mật khẩu..." value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                               </div>
+                           )}
+                           <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100 mt-2">
+                               <div>
+                                   <label className="block text-sm font-bold text-red-700 mb-1">Vai trò</label>
+                                   <select className="w-full border-2 border-blue-100 rounded-lg px-3 py-2 font-medium focus:border-blue-500 outline-none" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}>
+                                       <option value="USER">Khách hàng</option>
+                                       <option value="STAFF">Nhân viên</option>
+                                       <option value="ADMIN">Quản trị</option>
+                                   </select>
+                               </div>
+                               <div>
+                                   <label className="block text-sm font-bold text-red-700 mb-1">Trạng thái</label>
+                                   <select className="w-full border-2 border-blue-100 rounded-lg px-3 py-2 font-medium focus:border-blue-500 outline-none" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
+                                       <option value="ACTIVE">Hoạt động</option>
+                                       <option value="BANNED">Khóa tài khoản</option>
+                                       <option value="DELETED">Đã xóa</option>
+                                   </select>
+                               </div>
                            </div>
                        </div>
                        <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
                            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">Hủy</button>
-                           <button type="submit" disabled={isUploading} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm shadow-sm"><Save size={16}/> {currentUser ? "Lưu thay đổi" : "Tạo tài khoản"}</button>
+                           <button type="submit" disabled={isUploading} className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-lg text-sm shadow-sm"><Save size={16}/> {currentUser ? "Lưu thay đổi" : "Tạo tài khoản"}</button>
                        </div>
                    </form>
                </div>

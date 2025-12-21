@@ -14,7 +14,7 @@ const FEATURED_LEAGUES = [
     { name: "Giao Hữu", icon: <Zap size={32} />, color: "from-purple-500 to-pink-500", desc: "Giao lưu quốc tế" },
 ];
 const BANNER_IMAGES = [
-    `${API_BASE}/uploads/1764953369361-934511660.jpg`,
+    `${API_BASE}/uploads/banner-1.jpg`,
     `${API_BASE}/uploads/banner-2.jpg`,
     `${API_BASE}/uploads/banner-3.jpg`,
 ];
@@ -80,7 +80,7 @@ export default function Home() {
                 <span className="inline-block py-1 px-3 rounded bg-red-600 text-white text-xs font-bold uppercase tracking-wider mb-4 shadow-lg shadow-red-600/50 animate-pulse">
                     Mùa giải 2025
                 </span>
-                <h1 className="text-4xl md:text-7xl font-black mb-6 leading-tight tracking-tight drop-shadow-2xl">
+                <h1 className="text-4xl md:text-4xl font-black mb-6 leading-tight tracking-tight drop-shadow-2xl">
                     SĂN VÉ <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">ĐỈNH CAO</span> <br/>
                     CỔ VŨ ĐAM MÊ
                 </h1>
@@ -126,7 +126,7 @@ export default function Home() {
                         <div className="mb-16">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2 bg-red-600 rounded-lg text-white shadow-lg shadow-red-200"><Flame size={24} className="fill-current"/></div>
-                                <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Trận cầu <span className="text-red-600">Tâm điểm</span></h2>
+                                <h2 className="text-2xl md:text-2xl font-black text-gray-900 uppercase tracking-tight">Trận cầu <span className="text-red-600">Tâm điểm</span></h2>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -141,7 +141,7 @@ export default function Home() {
                             <div className="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-blue-600 rounded-lg text-white shadow-lg shadow-blue-200"><Zap size={24} className="fill-current"/></div>
-                                    <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Sắp <span className="text-blue-600">Diễn ra</span></h2>
+                                    <h3 className="text-2xl md:text-2xl font-black text-gray-900 uppercase tracking-tight">Sắp <span className="text-blue-600">Diễn ra</span></h3>
                                 </div>
                                 <Link to="/matches" className="text-sm font-bold text-gray-500 hover:text-blue-600 flex items-center gap-1 transition-colors px-3 py-1 rounded-full hover:bg-blue-50">
                                     Xem tất cả <ArrowRight size={16}/>

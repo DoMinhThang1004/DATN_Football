@@ -6,7 +6,7 @@ import UserLayout from "../../layouts/UserLayout.jsx";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const LOGIN_API = `${API_BASE}/api/users/login`;
-const BANNER_IMG = `${API_BASE}/uploads/banner-1.jpg`;
+const BANNER_IMG = `${API_BASE}/uploads/logo2.svg`;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -115,9 +115,6 @@ export default function LoginPage() {
                 style={{ backgroundImage: `url('${BANNER_IMG}')` }}></div>
             <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 via-black/50 to-black/30"></div>
             <div className="relative z-10 text-center px-12 animate-in slide-in-from-bottom-10 duration-700">
-                <div className="inline-flex items-center justify-center w-24 h-24 bg-red-600 rounded-full mb-8 shadow-2xl border-4 border-white/20 backdrop-blur-sm">
-                    <span className="text-5xl font-black text-white">F</span>
-                </div>
                 <h2 className="text-5xl font-black text-white mb-6 leading-tight drop-shadow-lg">
                     SĂN VÉ TRẬN CẦU <br/> 
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-500">ĐỈNH CAO</span>
@@ -150,7 +147,7 @@ export default function LoginPage() {
                     <div>
                         <div className="flex justify-between items-center mb-1.5">
                             <label className="block text-sm font-bold text-gray-700">Mật khẩu</label>
-                            <Link to="/forgot-password" type="button" className="text-sm font-semibold text-blue-600 hover:underline">Quên mật khẩu?</Link>
+                            <Link to="/forgot-password" type="button" className="text-sm font-semibold text-gray-600 hover:underline">Quên mật khẩu?</Link>
                         </div>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -170,7 +167,7 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <button type="submit" disabled={isLoading} className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transform active:scale-95">
+                    <button type="submit" disabled={isLoading} className="w-full py-3.5 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 transition shadow-lg shadow-blue-200 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transform active:scale-95">
                         {isLoading ? <Loader2 className="animate-spin"/> : <>Đăng nhập <ArrowRight size={18}/></>}
                     </button>
                 </form>

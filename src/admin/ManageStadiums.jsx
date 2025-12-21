@@ -204,7 +204,7 @@ export default function ManageStadiums() {
             <h1 className="text-2xl font-bold text-gray-800">Sân vận động</h1>
             <p className="text-gray-500 text-sm">Quản lý danh sách sân thi đấu.</p>
           </div>
-          <button onClick={handleAddNew} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm">
+          <button onClick={handleAddNew} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 shadow-sm">
             <Plus size={20} />
             <span>Thêm mới</span>
           </button>

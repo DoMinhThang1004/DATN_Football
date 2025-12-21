@@ -118,7 +118,7 @@ export default function ForgotPassword() {
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" required />
                             </div>
-                            <button type="submit" disabled={isLoading} className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex justify-center items-center gap-2">
+                            <button type="submit" disabled={isLoading} className="w-full py-3.5 bg-gray-600 text-white font-bold rounded-xl hover:bg-gray-700 transition-all flex justify-center items-center gap-2">
                                 {isLoading ? <Loader2 className="animate-spin"/> : <>Gửi mã xác nhận <ArrowRight size={18}/></>}
                             </button>
                             <div className="text-center mt-4">

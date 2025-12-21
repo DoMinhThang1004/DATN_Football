@@ -176,7 +176,7 @@ export default function PolicyPage() {
                     <div className="mt-10 bg-blue-50 rounded-xl p-4 border border-blue-100 text-center">
                         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-2 text-blue-600 shadow-sm"><AlertCircle size={20}/></div>
                         <p className="text-xs text-gray-600 mb-2">Bạn có thắc mắc khác?</p>
-                        <a href="mailto:support@footballtic.com" className="text-blue-600 text-xs font-bold hover:underline">Liên hệ ngay</a>
+                        <a href="contact" className="text-blue-600 text-xs font-bold hover:underline">Liên hệ ngay</a>
                     </div>
                 </div>
                 <div className="w-full md:w-3/4 p-8 md:p-12 bg-white">

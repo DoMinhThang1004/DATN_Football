@@ -84,7 +84,8 @@ export default function Sidebar() {
       navigate("/login"); 
   };
 
-  const activeClass = "bg-blue-600 text-white shadow-lg shadow-blue-900/20";
+  // Active style: show gray text with a bottom border (underline) instead of blue background
+  const activeClass = "text-gray-300 border-b-2 border-gray-400 bg-transparent shadow-none";
   const inactiveClass = "text-gray-400 hover:bg-gray-800 hover:text-white";
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path ? activeClass : inactiveClass;
@@ -96,7 +97,7 @@ export default function Sidebar() {
       <aside className="w-72 bg-[#111827] text-gray-300 flex flex-col h-full border-r border-gray-800 font-sans transition-all duration-300 relative z-20 shadow-2xl">
         <div className="h-20 flex items-center px-6 border-b border-gray-800/50 bg-[#111827]">
           <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+              <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                 <Shield size={20} fill="currentColor" className="text-white/90"/>
               </div>
               <div>
@@ -135,7 +136,7 @@ export default function Sidebar() {
                   onClick={() => setIsResourcesOpen(!isResourcesOpen)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm group ${
                       (location.pathname.startsWith('/admin/manage-stadiums') || location.pathname.startsWith('/admin/manage-tickets')) 
-                      ? 'bg-gray-800 text-white' 
+                      ? 'text-gray-300 border-b-2 border-gray-400' 
                       : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}>
                     <div className="flex items-center gap-3">
                       <Settings size={20} className={`transition-transform duration-300 ${isResourcesOpen ? 'rotate-90' : ''}`}/>

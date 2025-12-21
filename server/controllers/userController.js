@@ -116,23 +116,31 @@ const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { full_name, email, phone, role, status, avatar_url, password, gender, birth_date } = req.body;
+    const finalBirthDate = (birth_date === "" || birth_date === undefined) ? null : birth_date;     // nếu ngày sinh là chuỗi rỗng chuyển qua null
 
     if (password && password.trim() !== "") {
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-        await pool.query(`UPDATE users SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, password = $7, gender = $8, birth_date = $9 WHERE id = $10`,
-            [full_name, email, phone, role, status, avatar_url, hashedPassword, gender, birth_date, id]
+        await pool.query(
+            `UPDATE users 
+             SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, password = $7, gender = $8, birth_date = $9 
+             WHERE id = $10`,
+            [full_name, email, phone, role, status, avatar_url, hashedPassword, gender, finalBirthDate, id]
         );
     } else {
-        await pool.query( `UPDATE users SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, gender = $7, birth_date = $8 WHERE id = $9`,
-            [full_name, email, phone, role, status, avatar_url, gender, birth_date, id]
+        await pool.query(
+            `UPDATE users 
+             SET full_name = $1, email = $2, phone = $3, role = $4, status = $5, avatar_url = $6, gender = $7, birth_date = $8 
+             WHERE id = $9`,
+            [full_name, email, phone, role, status, avatar_url, gender, finalBirthDate, id]
         );
     }
     res.json("Cập nhật thành công!");
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Lỗi Server');
+    res.status(500).send('Lỗi Server: ' + err.message);
   }
 };
+
 
 //xóa mềm
 const deleteUser = async (req, res) => {

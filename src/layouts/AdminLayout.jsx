@@ -1,12 +1,14 @@
 import React from "react";
 import Sidebar from "../components/admin/Sidebar";
 import TopNav from "../components/admin/Topnav";   
+import ScrollToTop from "../components/common/ScrollToTop";
 
 export default function AdminLayout({ children }) {
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
       
       <div className="flex-none">
+        <ScrollToTop/>
         <Sidebar />
       </div>
 

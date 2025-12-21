@@ -27,7 +27,7 @@ export default function MatchDetailPage() {
   const [isLoadingSeats, setIsLoadingSeats] = useState(false);
 
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [showLimitModal, setShowLimitModal] = useState(false);
+  //const [showLimitModal, setShowLimitModal] = useState(false);
   
   const [zoneFilter, setZoneFilter] = useState(null); 
 
@@ -162,10 +162,10 @@ const zones = [
     if (isSelected) {
         removeFromCart(seatId);
     } else {
-        if (cartItems.length >= 4) {
-            setShowLimitModal(true);
-            return;
-        }
+        //if (cartItems.length >= 4) {
+            //setShowLimitModal(true);
+            //return;
+        //}
         addToCart([{ 
             id: seatId,                  
             matchId: match.id,
@@ -261,7 +261,7 @@ const zones = [
     <UserLayout>
       <div className="bg-gray-100 min-h-screen pb-12 relative">
         
-        {showLimitModal && (
+        {/*{showLimitModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fadeIn">
                 <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
                     <button onClick={() => setShowLimitModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={24} /></button>
@@ -271,7 +271,7 @@ const zones = [
                     <button onClick={() => setShowLimitModal(false)} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition">Đã hiểu</button>
                 </div>
             </div>
-        )}
+        )}*/}
 
         <div className="bg-white border-b border-gray-200 sticky top-16 z-30 shadow-sm">
             <div className="container mx-auto px-6 py-4">

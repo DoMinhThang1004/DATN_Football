@@ -210,17 +210,6 @@ export default function NewsPage() {
                                             ))}
                                         </div>
                                     </div>
-
-                                    <div className="bg-gradient-to-br from-blue-900 to-indigo-800 p-6 rounded-xl text-white text-center relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-4 opacity-10"><Flame size={100}/></div>
-                                        <h4 className="font-bold text-lg mb-2 relative z-10">Đừng bỏ lỡ V-League!</h4>
-                                        <p className="text-xs text-blue-200 mb-4 relative z-10">Nhận thông báo lịch thi đấu và vé mới nhất qua email.</p>
-                                        <div className="relative z-10">
-                                            <input type="email" placeholder="Email của bạn" className="w-full px-3 py-2 rounded text-gray-900 text-sm mb-2 outline-none"/>
-                                            <button className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded text-sm font-bold transition">Đăng ký ngay</button>
-                                        </div>
-                                    </div>
-
                                 </aside>
                             </div>
                         </>

@@ -26,9 +26,9 @@ pool.connect((err) => {
     console.error('Lỗi kết nối PostgreSQL:', err.message);
   } else {
     if (isProduction) {
-        console.log('Đã kết nối thành công đến SUPABASE (Cloud)!');
+        console.log('Đã kết nối thành công đến sup');
     } else {
-        console.log('Đã kết nối thành công đến LOCALHOST (Máy tính)!');
+        console.log('Đã kết nối thành công đến local');
     }
   }
 });

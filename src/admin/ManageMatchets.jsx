@@ -174,7 +174,7 @@ export default function ManageMatches() {
                     Tổng số: <span className="font-bold text-blue-600">{filteredMatches.length}</span> trận đấu
                 </p>
             </div>
-            <button onClick={handleAddNew} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"><Plus size={20} /><span>Thêm trận mới</span></button>
+            <button onClick={handleAddNew} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 shadow-sm transition-colors"><Plus size={20} /><span>Thêm trận mới</span></button>
         </div>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col xl:flex-row gap-4">
             <div className="relative flex-1">

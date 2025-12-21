@@ -32,7 +32,7 @@ import ProfileLayout from '../layouts/ProfileLayout.jsx';
 import NotFoundPage from '../pages/home/NotFoundPage.jsx';
 import PolicyPage from '../pages/support/PolicyPage.jsx';
 import FAQPage from '../pages/support/FAQ.jsx';
-import ForgotPassword from '../pages/auth/ForgotPassword.jsx';
+import ForgotPassWord from '../pages/auth/ForgotPassWord.jsx';
 
 import ProtectedRoute from '../components/admin/ProtectedRoute.jsx';
 
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
   { path: '/contact', element: <ContactPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
-  { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/forgot-password', element: <ForgotPassWord /> },
   { path: '/faq', element: <FAQPage /> },
   { path: '/policy', element: <PolicyPage /> },
 

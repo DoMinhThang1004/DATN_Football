@@ -6,7 +6,7 @@ import UserLayout from "../../layouts/UserLayout.jsx";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const REGISTER_API = `${API_BASE}/api/users/register`;
-const BANNER_IMG = `${API_BASE}/uploads/banner-2.jpg`;
+const BANNER_IMG = `${API_BASE}/uploads/logo2.svg`;
 
 export default function RegisterPage() {
   const navigate = useNavigate();

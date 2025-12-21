@@ -195,9 +195,9 @@ export default function CartPage() {
                                 <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
                                     <ShoppingCart size={40} className="text-gray-300"/>
                                 </div>
-                                    <h3 className="text-lg font-bold text-gray-800 mb-1">Giỏ hàng trống trơn!</h3>
+                                    <h3 className="text-lg font-bold text-gray-800 mb-1">Giỏ hàng trống!</h3>
                                     <p className="text-gray-500 mb-6 text-sm">Bạn chưa chọn vé nào. Hãy tìm một trận đấu hấp dẫn nhé.</p>
-                                <Link to="/matches" className="px-6 py-2.5 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                                <Link to="/matches" className="px-6 py-2.5 bg-yellow-600 text-white rounded-full font-bold hover:bg-yellow-700 transition shadow-lg shadow-blue-200">
                                     Tìm vé ngay
                                 </Link>
                             </div>

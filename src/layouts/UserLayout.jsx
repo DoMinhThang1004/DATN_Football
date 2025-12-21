@@ -3,15 +3,16 @@ import { Outlet } from 'react-router-dom';
 import Header from '../components/user/Header';
 import Footer from '../components/user/Footer';
 import FloatingButtons from '../components/user/FloatingButtons.jsx';
-import ChatBox from '../components/support_user/ChatBox'; 
+import ChatBox from '../components/support_user/ChatBox.jsx'; 
+import ScrollToTop from '../components/common/ScrollToTop.jsx';
 
 export default function UserLayout({ children }) {
   // lấy tt user cho chat
   const [currentUser, setCurrentUser] = useState(null);
+  
 
   useEffect(() => {
     // lấy tt user đã đn từ local
-    // lưu key khi đn 
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
@@ -22,13 +23,13 @@ export default function UserLayout({ children }) {
     }
   }, []);
 
-  // cb dl props
   const userId = currentUser?.id || null;
   const userName = currentUser?.full_name || "Quý Khách";
 
   return (
     <div className="flex flex-col min-h-screen pt-16">
       <div className="fixed top-0 left-0 w-full z-50">
+        <ScrollToTop/>
         <Header />
       </div>
 

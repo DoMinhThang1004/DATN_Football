@@ -5,16 +5,9 @@ const userSessions = new Map();
 const activeAdmins = new Map();   
 
 const { 
-    getTicketPricingData, 
-    getUpcomingMatches, 
-    getFaqData, 
-    getAccountAndPolicyFAQs, 
-    getStadiumAndZoneInfo, 
-    getPaymentMethods,
-    getTicketCancellationPolicy,
-    saveChatMessage,
-    getUserInfo 
-    } = require('./dbQuerySocket'); 
+    getTicketPricingData, getUpcomingMatches, getFaqData,  getAccountAndPolicyFAQs, 
+    getStadiumAndZoneInfo,  getPaymentMethods,getTicketCancellationPolicy,saveChatMessage,
+    getUserInfo } = require('./dbQuerySocket'); 
 
 module.exports = (io) => {
     
@@ -74,12 +67,35 @@ module.exports = (io) => {
             }
         });
         
+        //ad gửi tn
         socket.on('send_live_message_to_user', async (data) => {
             const { userId, message } = data; 
             if (userSessions.has(userId)) {
                 const session = userSessions.get(userId);
                 io.to(session.socketId).emit('ai_response', message); 
                 await saveChatMessage(userId, 'ai', message); 
+            }
+        });
+        
+        //end chat
+        socket.on('end_live_chat', () => {
+            const userSession = userSessions.get(currentUserId);
+            if (userSession && userSession.mode === 'LIVE') {
+                //tb cho admin end
+                if (userSession.agentSocketId) {
+                    io.to(userSession.agentSocketId).emit('user_ended_chat', { 
+                        userId: currentUserId,
+                        message: "Khách hàng đã kết thúc phiên chat."
+                    });
+                }
+                
+                // về ai
+                userSession.mode = 'AI';
+                userSession.agentSocketId = null;
+                userSession.agentId = null;
+                userSessions.set(currentUserId, userSession);
+                
+                // socket.emit('ai_response', "Đã kết thúc hỗ trợ trực tuyến.");
             }
         });
 
@@ -96,7 +112,7 @@ module.exports = (io) => {
                     });
                     await saveChatMessage(currentUserId, 'user', prompt); 
                 } else {
-                    socket.emit('ai_response', "Nhân viên đã thoát. Chuyển về chế độ AI.");
+                    socket.emit('ai_response', "Nhân viên đã thoát. Chuyển về chế độ chat thông minh.");
                     userSession.mode = 'AI'; 
                 }
                 return; 
@@ -147,7 +163,7 @@ module.exports = (io) => {
                 await saveChatMessage(currentUserId, 'user', prompt); 
 
                 const intentMap = [
-                    { keywords: ['giá vé', 'loại vé', 'mua vé như thế nào', 'bao nhiêu tiền'], handler: getTicketPricingData },
+                    { keywords: ['giá vé các trận như thế nào?', 'các loại vé', 'mua vé như thế nào', 'bao nhiêu tiền'], handler: getTicketPricingData },
                     { keywords: ['trận đấu', 'lịch thi đấu', 'khi nào đá', 'sắp tới'], handler: getUpcomingMatches },
                     { keywords: ['cách hủy vé', 'đổi vé', 'hoàn tiền'], handler: getTicketCancellationPolicy }, 
                     { keywords: ['faq', 'hỏi đáp', 'câu hỏi thường gặp'], handler: getFaqData },
@@ -180,7 +196,7 @@ module.exports = (io) => {
             } catch (error) {
                 console.error("AI Error:", error);
                 let msg = "Lỗi hệ thống AI.";
-                if (error.status === 429) msg = "Hệ thống đang bận. Vui lòng thử lại sau.";
+                if (error.status === 429) msg = "Hệ thống đang bảo trì. Vui lòng liên hệ nhân viên hỗ trợ.";
                 socket.emit('ai_error', msg);
             }
         });

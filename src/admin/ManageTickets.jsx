@@ -143,7 +143,7 @@ export default function ManageTickets() {
             <h1 className="text-2xl font-bold text-gray-800">Cấu hình Loại Vé</h1>
             <p className="text-gray-500 text-sm">Định nghĩa các hạng vé và màu sắc hiển thị trên sơ đồ (Dữ liệu thật).</p>
           </div>
-          <button onClick={handleAddNew} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+          <button onClick={handleAddNew} className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 shadow-sm transition-colors">
             <Plus size={20} /> <span>Thêm loại vé</span>
           </button>
         </div>

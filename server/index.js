@@ -6,6 +6,7 @@ const multer = require('multer');
 const http = require('http');
 const { Server } = require('socket.io');
 const initSocketHandler = require('./socket');
+const {startOrderCleanup} = require ('./services/cronService')
 
 const allowedOrigins = process.env.CORS_ORIGIN ? 
     process.env.CORS_ORIGIN.split(',') : 
@@ -13,6 +14,7 @@ const allowedOrigins = process.env.CORS_ORIGIN ?
 
 const app = express();
 const server = http.createServer(app);
+startOrderCleanup();// trạng thái hủy đơn khi quá tg quy định
 
 //socket.io với cors
 const io = new Server(server, { 

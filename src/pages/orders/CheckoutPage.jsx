@@ -14,7 +14,7 @@ const API_PAYMENT_VNPAY = `${API_HOST}/api/payment/create_payment_url`;
 const API_PAYMENT_MOMO = `${API_HOST}/api/payment/create_momo_url`; 
 
 const VNPAY_LOGO = "https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg";
-const MOMO_LOGO = "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png";
+const MOMO_LOGO = "https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Square.png";
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useCart();

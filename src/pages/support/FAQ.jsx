@@ -148,17 +148,12 @@ export default function FAQPage() {
                                     </p>
                                     
                                     <div className="flex flex-col justify-center gap-4">
-                                        <a 
-                                            href="tel:1900123456" 
-                                            className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200 hover:scale-[1.02]">
-                                            <Phone size={18}/> Gọi Hotline
-                                        </a>
                                         <button 
                                             className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-200 font-bold rounded-xl hover:bg-gray-50 transition hover:scale-[1.02]">
                                             <MessageCircle size={18} className="text-blue-600"/> Chat ngay
                                         </button>
                                         <a 
-                                            href="mailto:support@footballtic.com"
+                                            href="contact"
                                             className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-200 font-bold rounded-xl hover:bg-gray-50 transition hover:scale-[1.02]">
                                             <Mail size={18} className="text-orange-500"/> Gửi Email
                                         </a>

@@ -99,7 +99,7 @@ const Dashboard = () => {
               </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
             <StatCard 
                 title="Tổng doanh thu" 
                 value={Number(stats?.revenue || 0).toLocaleString() + 'đ'} 
@@ -117,7 +117,7 @@ const Dashboard = () => {
                 onClick={() => navigate('/admin/manage-users')}/>
             <StatCard 
                 title="Sân Vận Động" 
-                value="Số lượng" 
+                value={stats?.stadiums || 0} 
                 icon={Activity} color="text-orange-600" bgColor="bg-orange-100" trend="-2.1%" isPositive={false} 
                 onClick={() => navigate('/admin/manage-stadiums')}/>
         </div>

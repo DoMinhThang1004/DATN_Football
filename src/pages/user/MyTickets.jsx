@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, MapPin, Clock, QrCode, Download, X, Ticket, CheckCircle, Ban, AlertCircle, Loader2, ChevronRight, Truck, CreditCard, AlertTriangle, ArrowLeft, RefreshCcw } from "lucide-react";
+import { Calendar, MapPin, Clock, QrCode, Download, X, Ticket, CheckCircle, Ban, AlertCircle, Loader2, ChevronRight, Truck, CreditCard, AlertTriangle, ArrowLeft, RefreshCcw, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom"; 
 import { useCart } from "../../context/CartContext.jsx"; 
 import OrderDetailModal from "../../components//support_user/OderDetailModel.jsx"; 
@@ -16,6 +16,44 @@ const CANCEL_REASONS = [
     "Tìm thấy giá tốt hơn",
     "Khác"
 ];
+
+//component đếm thời gian
+const CountDownTimer = ({ createdAt }) => {
+    const [timeLeft, setTimeLeft] = useState("");
+    const [isExpired, setIsExpired] = useState(false);
+
+    useEffect(() => {
+        const calculateTimeLeft = () => {
+            const orderTime = new Date(createdAt).getTime();
+            const expiryTime = orderTime + 15 * 60 * 1000; //15p
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+
+            if (distance < 0) {
+                setIsExpired(true);
+                setTimeLeft("Đã hết hạn");
+                return;
+            }
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            setTimeLeft(`${minutes}p ${seconds}s`);
+        };
+
+        //cập nhật mỗi s
+        const timer = setInterval(calculateTimeLeft, 1000);
+        calculateTimeLeft(); 
+
+        return () => clearInterval(timer);
+    }, [createdAt]);
+    if (isExpired) {
+        return <span className="text-gray-500 font-medium text-xs bg-gray-100 px-2 py-1 rounded ml-2">Hết hạn thanh toán</span>;
+    }
+    return (
+        <span className="text-red-600 font-bold text-xs bg-red-50 px-2 py-1 rounded flex items-center gap-1 animate-pulse ml-2 border border-red-100">
+            <Clock size={12}/> Thanh toán trong: {timeLeft}
+        </span>
+    );
+};
 
 export default function MyTickets() {
   const navigate = useNavigate();
@@ -57,7 +95,8 @@ export default function MyTickets() {
             const res = await fetch(`${API_ORDER}/user/${parsedUser.id}`);
             if (res.ok) {
                 const data = await res.json();
-                setOrders(data);
+                // sắp xếp đơn ms lên đầu
+                setOrders(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
             }
         } catch (error) {
             console.error("Lỗi tải đơn hàng:", error);
@@ -110,6 +149,44 @@ export default function MyTickets() {
       setReorderModalOpen(true);
   };
 
+  //hàm tiếp tục thanh toán
+  const handleContinuePayment = async (order) => {
+      try {
+          showNotification("Đang chuyển hướng đến cổng thanh toán...", "info");
+          
+          let paymentUrl = "";
+          const payload = {
+              amount: order.total_amount,
+              orderId: order.id,
+              orderInfo: `Thanh toan don hang ${order.id}`
+          };
+
+          //xác định cổng thanh toán dựa vào url
+          let endpoint = `${API_BASE}/payment/create_payment_url`;
+          if (order.payment_method === 'MOMO') {
+              endpoint = `${API_BASE}/payment/create_momo_url`;
+          }
+
+          const res = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (data.paymentUrl) {
+              //chuyển hướng sang thanh toán
+              window.location.href = data.paymentUrl;
+          } else {
+              showNotification("Không thể tạo liên kết thanh toán. Vui lòng thử lại.", "error");
+          }
+
+      } catch (error) {
+          console.error("Lỗi tiếp tục thanh toán:", error);
+          showNotification("Lỗi kết nối đến cổng thanh toán.", "error");
+      }
+  };
+
   const confirmReOrder = async () => {
       setReorderModalOpen(false);
       const orderId = orderToReorderId;
@@ -155,7 +232,6 @@ export default function MyTickets() {
                   }
               }
           }
-
           //xử lý kq
           if (unavailableSeats.length > 0) {
               // tb ghế đã mất
@@ -187,6 +263,7 @@ export default function MyTickets() {
           case 'SHIPPING': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">Đang giao</span>;
           case 'DELIVERED': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">Đã giao</span>;
           case 'CANCELLED': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">Đã hủy</span>;
+          case 'FAILED': return <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">Thất bại</span>;
           default: return status;
       }
   };
@@ -199,7 +276,6 @@ export default function MyTickets() {
             <span className="font-medium">{notification.message}</span>
         </div>
       )}
-
       <div className="p-6 border-b border-gray-200">
         <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -211,7 +287,6 @@ export default function MyTickets() {
                 <ArrowLeft size={18}/> Về trang chủ
             </button>
         </div>
-
         <div className="flex gap-2 overflow-x-auto pb-2">
             {['ALL', 'PENDING', 'PAID', 'CANCELLED'].map(st => (
                 <button 
@@ -236,6 +311,8 @@ export default function MyTickets() {
                                 <div className="flex items-center gap-3 mb-1">
                                     <span className="font-mono font-bold text-lg text-gray-800">{order.id}</span>
                                     {getStatusBadge(order.status)}
+                                    {/* hiển thị đếm ngược hủy */}
+                                    {order.status === 'PENDING' && order.payment_method !== 'COD' && (<CountDownTimer createdAt={order.created_at} />)}
                                 </div>
                                 <p className="text-sm text-gray-500 flex items-center gap-2">
                                     <Calendar size={14}/> {new Date(order.created_at).toLocaleString('vi-VN')}
@@ -256,33 +333,43 @@ export default function MyTickets() {
                                     <p className="text-xs mt-1 text-yellow-700">
                                         {order.payment_method === 'COD' 
                                             ? "Chúng tôi sẽ sớm liên hệ để xác nhận giao vé. Vui lòng chú ý điện thoại." 
-                                            : "Vui lòng hoàn tất thanh toán để hệ thống xuất vé."}
+                                            : "Vui lòng hoàn tất thanh toán trong 15 phút để hệ thống xuất vé."}
                                     </p>
                                 </div>
                             </div>
                         )}
                         
-                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-                            {order.status === 'CANCELLED' && (
+                        <div className="flex justify-end gap-2 border-t border-gray-100 pt-3 mt-3">
+                            {(order.status === 'CANCELLED' || order.status === 'FAILED') && (
                                 <button 
                                     onClick={() => handleReOrderClick(order.id)}
-                                    className="px-4 py-2 border border-blue-200 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition flex items-center gap-2">
-                                    <RefreshCcw size={16}/> Mua lại
+                                    className="px-3 py-1.5 border border-blue-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 transition flex items-center gap-1">
+                                    <RefreshCcw size={14}/> Mua lại
                                 </button>
                             )}
 
                             {(order.status === 'PENDING') && (
                                 <button 
                                     onClick={() => openCancelModal(order)}
-                                    className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition">
-                                    Hủy đơn hàng
+                                    className="px-3 py-1.5 border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition">
+                                    Hủy
+                                </button>
+                            )}
+                            
+                            {/* nút thanh toán lại nếu đơn k phải giao cod */}
+                            {(order.status === 'PENDING' && order.payment_method !== 'COD') && (
+                                <button 
+                                    onClick={() => handleContinuePayment(order)}
+                                    className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 transition flex items-center gap-1">
+                                   <CreditCard size={14}/> Thanh toán
                                 </button>
                             )}
 
                             <button 
                                 onClick={() => setSelectedOrderId(order.id)}
-                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition flex items-center gap-2">
-                                Xem chi tiết <ChevronRight size={16}/>
+                                className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition flex items-center justify-center"
+                                title="Xem chi tiết">
+                                <Info size={18}/>
                             </button>
                         </div>
                     </div>

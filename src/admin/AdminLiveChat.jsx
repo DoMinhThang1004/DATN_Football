@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Headset, User, MessageSquare, Clock, Search, MoreVertical, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import io from 'socket.io-client';
-import AdminLayout from '../layouts/AdminLayout';
-
+import AdminLayout from '../layouts/AdminLayout.jsx';
 
 const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 const socket = io(SOCKET_SERVER_URL);
@@ -26,6 +25,14 @@ const AdminLiveChat = () => {
     const [input, setInput] = useState('');
     const messagesEndRef = useRef(null);
     
+    // thêm tn vào map
+    const addMessage = (userId, msg) => {
+        setMessagesMap(prev => ({
+            ...prev,
+            [userId]: [...(prev[userId] || []), msg]
+        }));
+    };
+
     useEffect(() => {
         const registerAdmin = () => {
             console.log(">> Admin đã kết nối live chat.");
@@ -52,6 +59,16 @@ const AdminLiveChat = () => {
             addMessage(data.userId, { sender: 'user', text: data.message, timestamp: new Date() });
         });
 
+        //tb khi kt chat
+        socket.on('user_ended_chat', (data) => {
+            const { userId, message } = data;
+            addMessage(userId, { 
+                sender: 'system', 
+                text: `⚠️ ${message}`, 
+                timestamp: new Date() 
+            });
+        });
+
         // tb hệ thống
         socket.on('ai_response', (response) => {
             //tb all
@@ -64,21 +81,14 @@ const AdminLiveChat = () => {
             socket.off('connect', registerAdmin);
             socket.off('new_live_request');
             socket.off('live_message_from_user');
+            socket.off('user_ended_chat'); //xóa
             socket.off('ai_response');
         };
-    }, [activeUser, activeChats]); 
+    }, [activeUser, activeChats]); // đảm bảo state ms nhất
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messagesMap, activeUser]);
-
-    // thêm tn vào map
-    const addMessage = (userId, msg) => {
-        setMessagesMap(prev => ({
-            ...prev,
-            [userId]: [...(prev[userId] || []), msg]
-        }));
-    };
 
     // xl chấp nhận
     const handleAcceptRequest = (request) => {
@@ -128,7 +138,7 @@ const AdminLiveChat = () => {
                 <div className="w-1/3 min-w-[320px] border-r border-gray-200 bg-gray-50 flex flex-col">
                     <div className="p-5 border-b border-gray-200 bg-white shadow-sm z-10">
                         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <MessageSquare className="text-blue-600"/> Live Support
+                            <MessageSquare className="text-blue-600"/> Hỗ Trợ Khách Hàng
                         </h2>
                     </div>
 
@@ -165,7 +175,7 @@ const AdminLiveChat = () => {
                         </div>
 
                         <div>
-                            <p className="text-xs font-bold text-orange-500 uppercase tracking-wider px-2 mb-2 flex items-center gap-2"> {/*danh sách chờ*/}
+                            <p className="text-xs font-bold text-orange-500 uppercase tracking-wider px-2 mb-2 flex items-center gap-2">
                                 <AlertCircle size={12}/> Tin nhắn chờ({requests.length})
                             </p>
                             {requests.length === 0 && <p className="text-xs text-gray-400 px-4 italic">Không có yêu cầu mới.</p>}
@@ -212,31 +222,27 @@ const AdminLiveChat = () => {
                                         <span className="text-xs text-green-600 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-full"><Phone size={18}/></button>
-                                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-full"><MoreVertical size={18}/></button>
-                                </div>
                             </div>
 
                             <div className="flex-grow overflow-y-auto p-6 bg-gray-50 space-y-4">
                                 {currentMessages.map((msg, index) => (
                                     <div key={index} className={`flex w-full ${msg.sender === 'admin' ? 'justify-end' : msg.sender === 'system' ? 'justify-center' : 'justify-start'}`}>
-                                        {msg.sender === 'system' ? (
-                                            <span className="text-[11px] text-gray-500 bg-gray-200 px-3 py-1 rounded-full border border-gray-300">{msg.text}</span>
-                                        ) : (
-                                            <div className={`flex flex-col max-w-[70%] ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
-                                                <div 
-                                                    className={`p-3 px-4 rounded-2xl text-sm shadow-sm leading-relaxed ${
-                                                        msg.sender === 'admin' 
-                                                        ? 'bg-blue-600 text-white rounded-tr-none' 
-                                                        : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none' }`} >
-                                                    {msg.text}
+                                            {msg.sender === 'system' ? (
+                                                <span className="text-[11px] text-gray-500 bg-gray-200 px-3 py-1 rounded-full border border-gray-300">{msg.text}</span>
+                                            ) : (
+                                                <div className={`flex flex-col max-w-[70%] ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
+                                                    <div 
+                                                        className={`p-3 px-4 rounded-2xl text-sm shadow-sm leading-relaxed ${
+                                                            msg.sender === 'admin' 
+                                                            ? 'bg-blue-600 text-white rounded-tr-none' 
+                                                            : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none' }`} >
+                                                        {msg.text}
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
+                                                        {formatTime(msg.timestamp || new Date())}
+                                                    </span>
                                                 </div>
-                                                <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
-                                                    {formatTime(msg.timestamp || new Date())}
-                                                </span>
-                                            </div>
-                                        )}
+                                            )}
                                     </div>
                                 ))}
                                 <div ref={messagesEndRef} />
@@ -249,7 +255,7 @@ const AdminLiveChat = () => {
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="Nhập tin nhắn..."
                                     className="flex-grow p-3 bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 border rounded-xl outline-none text-sm transition-all" />
-                                <button type="submit" className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-lg">
+                                <button type="submit" className="bg-yellow-600 text-white p-3 rounded-xl hover:bg-yellow    -700 transition shadow-lg">
                                     <Send size={20} />
                                 </button>
                             </form>
